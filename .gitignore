@@ -3,3 +3,4 @@ bundle
 doc
 bin
 .DS_Store
+.settings
