@@ -14,6 +14,7 @@ import org.sustudio.concise.app.enums.CorpusManipulation;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
@@ -37,7 +38,7 @@ public class CAImportThread extends ConciseThread {
 
 	@Override
 	public void running() {
-		File indexDir = manipulation.indexDir();
+		ConciseFile indexDir = manipulation.indexDir();
 		try {
 			dialog.setStatus("checking file existence...");
 			
@@ -60,7 +61,7 @@ public class CAImportThread extends ConciseThread {
 			}
 			
 			dialog.setStatus("load settings...");
-			Importer importer = new Importer(workspace, indexDir);
+			Importer importer = new Importer(indexDir);
 			for (File sourceFile : files) {
 				if (isInterrupted()) {
 					break;

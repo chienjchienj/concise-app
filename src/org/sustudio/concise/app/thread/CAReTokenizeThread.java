@@ -15,6 +15,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
+import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
@@ -89,7 +90,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		
 		Workspace workspace = Concise.getCurrentWorkspace();
 		IndexReader reader = workspace.getIndexReader();
-		File indexDir = workspace.getIndexDir();
+		ConciseFile indexDir = workspace.getIndexDir();
 		if (index == Workspace.INDEX.REFERENCE) {
 			reader = workspace.getIndexReaderRef();
 			indexDir = workspace.getIndexDirRef();
@@ -108,13 +109,13 @@ public class CAReTokenizeThread extends ConciseThread {
 		}
 		
 		// 2.) remove existing index
-		DocumentWriter writer = new DocumentWriter(workspace, indexDir);
+		DocumentWriter writer = new DocumentWriter(indexDir);
 		writer.deleteAll();
 		writer.close();
 		
 		// 3.) re-import files
 		dialog.setStatus("load settings...");
-		Importer importer = new Importer(workspace, indexDir);
+		Importer importer = new Importer(indexDir);
 		for (Map.Entry<File, Boolean> file : files.entrySet()) {
 			if (isInterrupted()) return;
 			

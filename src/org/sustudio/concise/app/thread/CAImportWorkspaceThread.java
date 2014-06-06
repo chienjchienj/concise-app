@@ -10,6 +10,7 @@ import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
@@ -35,7 +36,7 @@ public class CAImportWorkspaceThread extends ConciseThread {
 		try {
 			Workspace workspace = Concise.getCurrentWorkspace();
 			IndexReader reader = workspace.getIndexReaderRef();
-			File indexDir = workspace.getIndexDirRef();
+			ConciseFile indexDir = workspace.getIndexDirRef();
 			if (Gear.CorpusManager.equals(gear)) {
 				reader = workspace.getIndexReader();
 				indexDir = workspace.getIndexDir();
@@ -66,7 +67,7 @@ public class CAImportWorkspaceThread extends ConciseThread {
 					System.out.println(cd.toString());
 			}
 			
-			DocumentWriter writer = new DocumentWriter(workspace, indexDir);
+			DocumentWriter writer = new DocumentWriter(indexDir);
 			writer.addConciseDocuments(docs);
 			writer.close();
 			docs.clear();

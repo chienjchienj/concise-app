@@ -1,6 +1,5 @@
 package org.sustudio.concise.app.thread;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -12,6 +11,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
+import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentWriter;
@@ -38,14 +38,14 @@ public class CADeleteDocumentThread extends ConciseThread {
 		
 		Workspace workspace = Concise.getCurrentWorkspace();
 		try {
-			File indexDir = workspace.getIndexDirRef();
+			ConciseFile indexDir = workspace.getIndexDirRef();
 			if (gear == Gear.CorpusManager) {
 				AutoCompleter.removeInstanceFor(workspace.getIndexReader());
 				indexDir = workspace.getIndexDir();
 			}
 			
 			dialog.setStatus("deleting...");
-			DocumentWriter writer = new DocumentWriter(workspace, indexDir);
+			DocumentWriter writer = new DocumentWriter(indexDir);
 			if (deleteAll)
 				writer.deleteAll();
 			else

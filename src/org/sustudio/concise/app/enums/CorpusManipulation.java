@@ -1,7 +1,5 @@
 package org.sustudio.concise.app.enums;
 
-import java.io.File;
-
 import org.apache.lucene.index.IndexReader;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -13,6 +11,7 @@ import org.sustudio.concise.app.dialog.ImportWorkspaceDialog;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.thread.CADeleteDocumentThread;
+import org.sustudio.concise.core.ConciseFile;
 
 public enum CorpusManipulation {
 	
@@ -42,7 +41,7 @@ public enum CorpusManipulation {
 		return label;
 	}
 	
-	public File indexDir() {
+	public ConciseFile indexDir() {
 		switch (index) {
 		default:
 		case DOCUMENT:
