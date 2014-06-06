@@ -20,7 +20,7 @@ import org.sustudio.concise.core.collocation.TextualCollocateIterator;
 import org.sustudio.concise.core.collocation.TextualCollocateIterator.BOUNDARY;
 import org.sustudio.concise.core.concordance.Conc;
 
-public class CollocationThread extends CAThread {
+public class CollocationThread extends ConciseThread {
 	
 	public CollocationThread(CAQuery query) {
 		super(Gear.Collocator, query);

@@ -16,7 +16,7 @@ import org.sustudio.concise.core.cluster.ConcClusterIterator;
 import org.sustudio.concise.core.cluster.NgramClusterIterator;
 import org.sustudio.concise.core.concordance.Conc;
 
-public class CAClusterThread extends CAThread {
+public class CAClusterThread extends ConciseThread {
 
 	public CAClusterThread(CAQuery query) {
 		super(Gear.WordCluster, query);		

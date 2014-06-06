@@ -18,7 +18,7 @@ import org.sustudio.concise.core.concordance.Conc;
 import org.sustudio.concise.core.concordance.ConcLine;
 import org.sustudio.concise.core.concordance.ConcLineIterator;
 
-public class CAConcThread extends CAThread {
+public class CAConcThread extends ConciseThread {
 
 	public CAConcThread(CAQuery query) {
 		super(Gear.Concordancer, query);

@@ -16,7 +16,7 @@ import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentWriter;
 
-public class CADeleteDocumentThread extends CAThread {
+public class CADeleteDocumentThread extends ConciseThread {
 
 	private boolean deleteAll = false;
 	private ConciseDocument[] docs;

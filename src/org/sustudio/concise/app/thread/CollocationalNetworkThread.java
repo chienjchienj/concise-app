@@ -26,7 +26,7 @@ import org.sustudio.concise.core.collocation.TextualCollocateIterator;
 import org.sustudio.concise.core.collocation.TextualCollocateIterator.BOUNDARY;
 import org.sustudio.concise.core.concordance.Conc;
 
-public class CollocationalNetworkThread extends CAThread {
+public class CollocationalNetworkThread extends ConciseThread {
 
 	public final boolean expandedSubNetwork;
 	

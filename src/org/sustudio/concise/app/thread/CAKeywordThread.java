@@ -13,7 +13,7 @@ import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.keyword.Keyword;
 import org.sustudio.concise.core.keyword.KeywordIterator;
 
-public class CAKeywordThread extends CAThread {
+public class CAKeywordThread extends ConciseThread {
 
 	public CAKeywordThread(CAQuery query) {
 		super(Gear.KeywordLister, query);

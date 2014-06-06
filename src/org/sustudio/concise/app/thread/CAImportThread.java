@@ -27,7 +27,7 @@ import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
 import org.sustudio.concise.core.corpus.importer.Importer;
 
-public class CAImportThread extends CAThread {
+public class CAImportThread extends ConciseThread {
 
 	private CorpusManipulation manipulation;
 	private File[] files;

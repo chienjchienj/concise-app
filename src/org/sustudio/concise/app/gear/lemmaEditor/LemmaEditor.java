@@ -51,7 +51,7 @@ import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.gear.CCWordsTransfer;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
-import org.sustudio.concise.app.thread.CAThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.wordlister.Lemma;
@@ -493,7 +493,7 @@ public class LemmaEditor extends GearController {
 	
 	private void loadLemma(final File file) {
 		//CAProgressDialog dialog = new CAProgressDialog();
-		CAThread loadThread = new CAThread(Gear.LemmaEditor, new CAQuery(Gear.LemmaEditor)) {
+		ConciseThread loadThread = new ConciseThread(Gear.LemmaEditor, new CAQuery(Gear.LemmaEditor)) {
 
 			@Override
 			public void running() {

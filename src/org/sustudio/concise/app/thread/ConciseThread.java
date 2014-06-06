@@ -8,13 +8,13 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 
-public abstract class CAThread extends Thread {
+public abstract class ConciseThread extends Thread {
 
 	protected Gear gear;
 	protected CAQuery query;
 	protected CAProgressDialog dialog;
 	
-	public CAThread(Gear gear, CAQuery query) {
+	public ConciseThread(Gear gear, CAQuery query) {
 		this.gear = gear;
 		this.query = query;
 		dialog = new CAProgressDialog(gear.getController(Concise.getCurrentWorkspace()));

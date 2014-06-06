@@ -48,7 +48,7 @@ import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.query.DefaultConcQuery;
-import org.sustudio.concise.app.thread.CAThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.toolbar.CASearchAction;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.concordance.Conc;
@@ -298,7 +298,7 @@ public class ScatterPlotter extends GearController {
 	}
 	
 	public void doit(CAQuery query) {
-		CAThread thread = new CAThread(gear, query) {
+		ConciseThread thread = new ConciseThread(gear, query) {
 			@Override public void running() {
 				try {
 					

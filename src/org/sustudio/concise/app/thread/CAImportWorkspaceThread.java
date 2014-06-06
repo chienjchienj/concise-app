@@ -10,13 +10,14 @@ import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentWriter;
 
-public class CAImportWorkspaceThread extends CAThread {
+public class CAImportWorkspaceThread extends ConciseThread {
 
 	private final Workspace sourceWorkspace;
 	private ConciseDocument[] documents;
 	
-	public CAImportWorkspaceThread(Workspace source, ConciseDocument[] documents) {
-		super(Gear.ReferenceCorpusManager, new CAQuery(Gear.ReferenceCorpusManager));
+	public CAImportWorkspaceThread(Gear gear, Workspace source, ConciseDocument[] documents) {
+		super(gear, new CAQuery(gear));
+		
 		this.sourceWorkspace = source;
 		this.documents = documents;
 		

@@ -94,7 +94,7 @@ public class ImportDialog extends Shell {
 		tblDoc = new Table(grpDocuments, SWT.BORDER | SWT.FULL_SELECTION | SWT.VIRTUAL | SWT.MULTI);
 		tblDoc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
 		tblDoc.setLinesVisible(true);
-		tblDoc.setFont(getFont());
+		tblDoc.setFont(SWTResourceManager.getFont("Lucida Grande", 12, SWT.NORMAL));
 		
 		ToolBar toolBarDoc = new ToolBar(grpDocuments, SWT.FLAT | SWT.RIGHT);
 		

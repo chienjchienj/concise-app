@@ -20,7 +20,7 @@ import org.sustudio.concise.app.enums.PrefsEnum;
 import org.sustudio.concise.app.preferences.CAPrefsUtils;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.thread.CAReTokenizeThread;
-import org.sustudio.concise.app.thread.CAThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Platform;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
@@ -94,7 +94,7 @@ public class CAPreferencesDialog extends Shell {
 					{
 						if (Dialog.isConfirmed(getShell(), "Analyzer or Dictionary has been changed!", "Do you want to re-tokenize documents now?")) 
 						{	
-							CAThread thread = new CAReTokenizeThread();
+							ConciseThread thread = new CAReTokenizeThread();
 							thread.start();
 						}
 					}

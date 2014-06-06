@@ -18,6 +18,7 @@ public enum CorpusManipulation {
 	
 	ImportDocuments						(Workspace.INDEX.DOCUMENT,	CABundle.get("corpus.importDocs")),
 	ImportTokenizedDocuments			(Workspace.INDEX.DOCUMENT,	CABundle.get("corpus.importTokenizedDocs")),
+	ImportDocumentsFromWorkspace		(Workspace.INDEX.DOCUMENT,	"Documents From Other Workspace"),
 	ClearDocuments						(Workspace.INDEX.DOCUMENT,	CABundle.get("corpus.clearDocs")),
 	
 	ImportReferenceDocuments			(Workspace.INDEX.REFERENCE,	CABundle.get("corpus.importReferenceDocs")),
@@ -123,8 +124,12 @@ public enum CorpusManipulation {
 					ImportDialog.open(Workspace.INDEX.REFERENCE);
 					break;
 					
+				case ImportDocumentsFromWorkspace:
+					ImportWorkspaceDialog.openDialog(Gear.CorpusManager);
+					break;
+					
 				case ImportReferenceFromWorkspace:
-					ImportWorkspaceDialog.openDialog();
+					ImportWorkspaceDialog.openDialog(Gear.ReferenceCorpusManager);
 					break;
 				
 				default:

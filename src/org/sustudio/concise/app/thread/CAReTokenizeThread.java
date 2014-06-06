@@ -30,7 +30,7 @@ import org.sustudio.concise.core.corpus.importer.Importer;
  * @author Kuan-ming Su
  *
  */
-public class CAReTokenizeThread extends CAThread {
+public class CAReTokenizeThread extends ConciseThread {
 
 	public CAReTokenizeThread() {
 		super(Gear.CorpusManager, new CAQuery(Gear.CorpusManager));

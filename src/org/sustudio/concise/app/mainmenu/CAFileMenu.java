@@ -27,7 +27,7 @@ import org.sustudio.concise.app.gear.IGearFileRevealable;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.thread.CAReTokenizeThread;
-import org.sustudio.concise.app.thread.CAThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Platform;
 import org.sustudio.concise.app.widgets.CABoxView;
 
@@ -100,6 +100,10 @@ public class CAFileMenu extends CAMenuItem {
 				CorpusManipulation.ImportDocuments.label(), 
 				CorpusManipulation.ImportDocuments.selectionAdapter(),
 				SWT.NONE);
+		addItem(importMenu,
+				CorpusManipulation.ImportDocumentsFromWorkspace.label(),
+				CorpusManipulation.ImportDocumentsFromWorkspace.selectionAdapter(), 
+				SWT.NONE);
 		addSeparator(importMenu);
 		addItem(importMenu,
 				CorpusManipulation.ImportReferenceDocuments.label(),
@@ -133,7 +137,7 @@ public class CAFileMenu extends CAMenuItem {
 						"Do you want to re-tokenize documents now?", 
 						"All data will be reset.")) 
 				{	
-					CAThread thread = new CAReTokenizeThread();
+					ConciseThread thread = new CAReTokenizeThread();
 					thread.start();
 				}
 			}

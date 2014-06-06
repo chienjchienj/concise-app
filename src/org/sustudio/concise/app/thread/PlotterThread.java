@@ -21,7 +21,7 @@ import org.sustudio.concise.core.concordance.Conc;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
 import org.sustudio.concise.core.highlighter.DocumentHighlighter;
 
-public class PlotterThread extends CAThread {
+public class PlotterThread extends ConciseThread {
 
 	public PlotterThread(CAQuery query) {
 		super(Gear.ConcordancePlotter, query);
