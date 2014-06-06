@@ -1,5 +1,5 @@
 /target
-bundle
+bundle/create-run-jar.xml
 doc
 bin
 .DS_Store

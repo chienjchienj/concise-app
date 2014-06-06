@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Concise" default="bundle-concise" basedir=".">
+	<import file="create-run-jar.xml"/>
+	
+	<!-- check for java home -->
+	<!-- not work for Java 8
+	<exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome" />
+	-->
+	<exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome">
+		<arg value="-v" />
+		<arg value="1.7" />
+	</exec>
+	
+	<!-- update bundle version -->
+	<propertyfile file="bundle.properties">
+		<entry key="bundle.version" type="int" default="1" operation="+"/>
+	</propertyfile>
+	
+	<!-- read properties -->
+	<property file="bundle.properties"/>
+	
+	<!-- dest -->
+	<property name="folder.desktop" location="${user.home}/Desktop"/>
+	<property name="folder.dist" location="${folder.desktop}/concise-dist"/>
+	
+	<taskdef name="bundleapp" 
+		classname="com.oracle.appbundler.AppBundlerTask"
+		classpath="infinitekind-appbundler/appbundler/bin/appbundler-1.0ea.jar"/>
+
+	<target name="bundle-concise">
+		
+		<bundleapp outputdirectory="${folder.dist}"
+			name="${bundle.name}"
+			displayname="${bundle.name}"
+			identifier="org.sustudio.concise"
+			shortversion="${bundle.shortversion}"
+			version="${bundle.version}"
+			copyright="Copyright © 2011-2014 SUStudio. All rights reserved."
+			icon="${bundle.icon}"
+			mainclassname="org.sustudio.concise.app.Concise"
+			applicationCategory="public.app-category.reference">
+			
+			<runtime dir="${libexec_javahome}"/>
+
+			<arch name="x86_64"/>
+			
+			<bundledocument extensions="conciseworkspace"
+				icon="${bundle.icon}"
+				name="Concise Workspace"
+				role="editor"
+				isPackage="true"/>
+			
+			<bundledocument extensions="conciseindex"
+				icon="ConciseIndex.icns"
+				name="Concise Index"
+				role="none"
+				isPackage="true"/>
+			
+			<classpath file="${folder.dist}/concise-app.jar"/>
+			<classpath dir="${folder.dist}/concise-app_lib">
+				<include name="*.jar"/>
+			</classpath>
+			
+			<!-- Workaround since the icon parameter for bundleapp doesn't work -->
+			<!--
+			<option value="-Xdock:icon=Contents/Resources/${bundle.icon}"/>
+			-->
+			<!-- OSX specific options, optional -->
+			<!--
+			<option value="-Dapple.laf.useScreenMenuBar=true"/>
+			<option value="-Dcom.apple.macos.use-file-dialog-packages=true"/>
+			<option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
+			<option value="-Dcom.apple.mrj.application.apple.menu.about.name=Concise"/>
+			<option value="-Dcom.apple.smallTabs=true"/>
+			-->
+			
+			<option value="-XstartOnFirstThread"/>
+			<option value="-Xmx2048M"/>
+		</bundleapp>
+		
+		<!-- copy other icons to resources -->
+		<copy file="ConciseIndex.icns" todir="${folder.dist}/${bundle.name}.app/Contents/Resources"/>
+		
+		<!-- remove exported run jar -->
+		<!--
+		<delete file="${folder.dist}/${jar.name}"/>
+		<delete dir="${folder.lib}"/>
+		-->
+		
+		<!-- create bundle zip -->
+		<zip destfile="${folder.dist}/${bundle.name}-bundle${bundle.version}.zip">
+			<zipfileset dir="${folder.dist}/${bundle.name}.app" prefix="${bundle.name}.app"/>
+		</zip>
+	</target>
+</project>
