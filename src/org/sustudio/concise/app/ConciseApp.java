@@ -162,7 +162,7 @@ public class ConciseApp extends Shell {
 			try {
 				
 				if (workspace.getIndexReader() != null) {
-					AutoCompleter.getInstanceFor(workspace.getIndexReader());
+					AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
 				}
 				
 			} catch (Exception e) {

@@ -9,6 +9,7 @@ import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.gear.Gear;
+import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
@@ -48,7 +49,7 @@ public class CADeleteDocumentThread extends CAThread {
 			if (deleteAll)
 				writer.deleteAll();
 			else
-				writer.deleteDocument(docs);
+				writer.deleteDocuments(docs);
 			writer.close();
 			
 			if (deleteAll) {
@@ -69,7 +70,7 @@ public class CADeleteDocumentThread extends CAThread {
 			
 			dialog.setStatus("re-open index directory...");
 			if (gear == Gear.CorpusManager && workspace.getIndexReader() != null) {
-				AutoCompleter.getInstanceFor(workspace.getIndexReader());
+				AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
 			}
 		} catch (IOException e) {
 			workspace.logError(gear, e);

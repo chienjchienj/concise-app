@@ -29,8 +29,8 @@ import org.sustudio.concise.app.enums.CorpusManipulation;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.thread.CAImportThread;
-import org.sustudio.concise.app.utils.CAFileUtils;
 import org.sustudio.concise.core.corpus.importer.AnalyzerEnum;
+import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -188,6 +188,7 @@ public class ImportDialog extends Shell {
 		});
 		btnTokenize.setFont(getFont());
 		
+		
 		final Link showMoreOptions = new Link(grpOptions, SWT.NONE);
 		showMoreOptions.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -198,7 +199,7 @@ public class ImportDialog extends Shell {
 				ImportDialog.this.layout();
 			}
 		});
-		showMoreOptions.setText("<a>more options...</a>");
+		showMoreOptions.setText("<a>Show more options...</a>");
 		showMoreOptions.setFont(getFont());
 		
 		Composite compFooter = new Composite(this, SWT.NONE);
@@ -329,7 +330,7 @@ public class ImportDialog extends Shell {
 					// copy dictionary files to concise workspace
 					File file = new File(f);
 					File targetFile = new File(Concise.getCurrentWorkspace().getDictionaryDir(), file.getName());
-					targetFile = CAFileUtils.getUniqueFile(targetFile);
+					targetFile = ConciseFileUtils.getUniqueFile(targetFile);
 					try {
 						FileUtils.copyFile(file, targetFile, true);
 					} catch (IOException e) {
@@ -475,7 +476,7 @@ public class ImportDialog extends Shell {
 		else
 			manipulation = CorpusManipulation.ImportTokenizedReferenceDocuments;
 		
-		System.out.println(manipulation);
+		Concise.getCurrentWorkspace().logInfo(manipulation.label());
 		
 		// settings
 		CAPrefs.userDictionaries = Concise.getCurrentWorkspace().getDictionaryFiles();

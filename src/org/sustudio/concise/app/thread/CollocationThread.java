@@ -75,7 +75,7 @@ public class CollocationThread extends CAThread {
 			
 			int count = 0;
 			for (Collocate coll : collocateIterator) {
-				if (isKilled()) {
+				if (isInterrupted()) {
 					break;
 				}
 				

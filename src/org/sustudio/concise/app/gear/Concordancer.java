@@ -327,7 +327,7 @@ public class Concordancer
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
 				
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILEPATH.field());
+				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
 				return new File(filepath).exists();
 				
 			} catch (Exception e) {
@@ -343,7 +343,7 @@ public class Concordancer
 		if (table.getSelectionCount() == 1) {
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILEPATH.field());
+				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
 				if (new File(filepath).exists()) {
 					RevealInFinder.show(filepath);
 				}

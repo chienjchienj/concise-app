@@ -1,5 +1,6 @@
 package org.sustudio.concise.app.gear.collocationalNetworker;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,27 +18,37 @@ import org.eclipse.gef4.zest.core.widgets.GraphItem;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.wb.swt.SWTResourceManager;
+import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.db.SQLUtils;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
+import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.enums.SearchAction;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.gear.IGearCollocatable;
 import org.sustudio.concise.app.gear.IGearConcordable;
+import org.sustudio.concise.app.helper.CopyPasteHelper;
 import org.sustudio.concise.app.helper.ZoomHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
@@ -47,6 +58,7 @@ import org.sustudio.concise.app.query.DefaultConcQuery;
 import org.sustudio.concise.app.thread.CollocationalNetworkThread;
 import org.sustudio.concise.app.toolbar.CASearchAction;
 import org.sustudio.concise.app.utils.Formats;
+import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.collocation.Collocate;
 
@@ -57,7 +69,7 @@ public class CollocationalNetworker
 	private int colorIndex;
 	
 	
-	private List<List<Collocate>> collocateList;
+	protected final List<List<Collocate>> collocateList = new ArrayList<List<Collocate>>();
 	private Map<String, CAGraphNode> nodesData;
 	
 	private double maxFilterValue = Double.MIN_VALUE;
@@ -102,18 +114,64 @@ public class CollocationalNetworker
 				
 				// expand network
 				//   build a new concise query
-				// 
 				CAQuery subQuery = new CAQuery(baseQuery);
 				subQuery.searchAction = SearchAction.WORD;
 				subQuery.searchStr = nodeWord;
-				CollocationalNetworkThread thread = new CollocationalNetworkThread(subQuery);
-				thread.setExpanded(true);
-				thread.setCancelWarningMessage("Do you want to cancel current task?");
+				CollocationalNetworkThread thread = new CollocationalNetworkThread(subQuery, true);
+				//thread.setCancelWarningMessage("Do you want to cancel current task?");
 				thread.start();
 			}
 		});
+		networkGraph.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent event) {
+				dataPanel.selectNodes(networkGraph.getSelectedNodes());
+			}
+		});
+		networkGraph.addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent event) {
+				switch (event.keyCode) {
+				case SWT.BS:
+				case SWT.DEL:
+					dataPanel.deleteNodes();
+					break;
+				}
+			}
+		});
 		
-		TabFolder tabFolder = new TabFolder(sash, SWT.NONE);
+		final Composite sideComposite = new Composite(sash, SWT.EMBEDDED);
+		sideComposite.setLayout(new GridLayout());
+		
+		Group buttons = new Group(sideComposite, SWT.SHADOW_IN);
+		buttons.setText("Add Node");
+		buttons.setLayout(new FillLayout());
+		buttons.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		
+		final CAAutoCompleteText text = new CAAutoCompleteText(buttons, SWT.BORDER | SWT.SEARCH | SWT.CANCEL);
+		text.addSelectionListener(new SelectionAdapter() {
+			public void widgetDefaultSelected(SelectionEvent event) {
+				if (text.getText().trim().isEmpty()) {
+					return;
+				}
+				
+				// create a sub-query
+				CAQuery subQuery = new CAQuery(baseQuery);
+				subQuery.searchAction = SearchAction.WORD;
+				subQuery.searchStr = text.getText().trim();
+				CollocationalNetworkThread thread = new CollocationalNetworkThread(subQuery, true);
+				thread.start();
+			}
+		});
+		text.setFont(getFont());
+		CopyPasteHelper.listenTo(text);
+		try {
+			text.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+		} catch (IOException e) {
+			Concise.getCurrentWorkspace().logError(gear, e);
+			Dialog.showException(e);
+		}
+		
+		TabFolder tabFolder = new TabFolder(sideComposite, SWT.NONE);
+		tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
 		TabItem optionsTab = new TabItem(tabFolder, SWT.NONE);
 		optionsTab.setText("Options");
@@ -121,7 +179,7 @@ public class CollocationalNetworker
 		
 		TabItem dataTab = new TabItem(tabFolder, SWT.NONE);
 		dataTab.setText("Data");
-		dataPanel = new NetworkDataPanel(tabFolder, SWT.NONE, networkGraph);
+		dataPanel = new NetworkDataPanel(tabFolder, SWT.NONE, this);
 		dataTab.setControl(dataPanel);
 		
 		sash.setWeights(new int[] {70, 30});
@@ -153,6 +211,12 @@ public class CollocationalNetworker
 		return new Control[] { networkGraph };
 	}
 	
+	public void resetStatus() {
+		setStatusText(Formats.getNumberFormat(networkGraph.getNodes().size()) + " nodes and " +
+		  	  	  	  Formats.getNumberFormat(networkGraph.getConnections().size()) + " connections "
+		  	  	  	  + "(" + CAPrefs.COLLOCATION_MODE.label() + ")");
+	}
+	
 	@Override
 	public void loadData() {
 		
@@ -174,9 +238,14 @@ public class CollocationalNetworker
 				baseQuery = CAQueryUtils.getQuery(getGear());
 			}
 			
+			for (List<Collocate> list : this.collocateList) {
+				list.clear();
+			}
+			this.collocateList.clear();
+			
 			for (int i=0; i<batchSize; i++) 
 			{
-				ArrayList<Collocate> collocateList = new ArrayList<Collocate>();
+				ArrayList<Collocate> collList = new ArrayList<Collocate>();
 				String sql = SQLUtils.selectSyntax(CATable.CollocationalNetworker,
 												   DBColumn.BatchIndex.columnName() + " = " + i,
 												   DBColumn.NodeFreq,
@@ -191,17 +260,12 @@ public class CollocationalNetworker
 					long nodeFreq = rs.getLong(DBColumn.NodeFreq.columnName());
 					Collocate collocate = new Collocate(word, signatureO, signatureF1, signatureF2, signatureN);
 					collocate.setNodeFreq(nodeFreq);
-					collocateList.add(collocate);					
+					collList.add(collocate);
 				}
 				rs.close();
 				
-				if (!collocateList.isEmpty()) {
-					if (i == 0) {
-						setInput(collocateList);
-					}
-					else {
-						addInput(collocateList);
-					}
+				if (!collList.isEmpty()) {
+					addInput(collList);
 				}
 			}
 		
@@ -210,27 +274,18 @@ public class CollocationalNetworker
 		}
 		
 		redrawGraph();
-		setStatusText(Formats.getNumberFormat(networkGraph.getNodes().size()) + " nodes and " +
-			  	  	  Formats.getNumberFormat(networkGraph.getConnections().size()) + " connections "
-			  	  		+ "(" + CAPrefs.COLLOCATION_MODE.label() + ")");
+		resetStatus();
 		
-		getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				spinner.close();
-			}
-		});
+		spinner.close();
 		super.loadData();
 	}
 	
 	@Override
 	protected void unloadData() {
-		if (collocateList != null) {
-			for (List<Collocate> list : collocateList) {
-				list.clear();
-			}
-			collocateList.clear();
-			collocateList = null;
+		for (List<Collocate> list : collocateList) {
+			list.clear();
 		}
+		collocateList.clear();
 		super.unloadData();
 	}
 
@@ -286,24 +341,6 @@ public class CollocationalNetworker
 		}
 	}
 	
-	
-	
-	/**
-	 * Re-sets input collocate list.
-	 * @param colls		collocate list.
-	 */
-	private void setInput(List<Collocate> colls) {
-		if (collocateList != null) {
-			for (List<Collocate> list : collocateList) {
-				list.clear();
-			}
-			collocateList.clear();
-		}
-		if (collocateList == null) {
-			collocateList = new ArrayList<List<Collocate>>();;
-		}
-		addInput(colls);
-	}
 
 	/**
 	 * Adds collocate lists to the current network graph.
@@ -332,14 +369,9 @@ public class CollocationalNetworker
 			
 		});
 		
-		if (collocateList == null) {
-			collocateList = new ArrayList<List<Collocate>>();;
-		}
-		else {
-			// test if the batch is already exists
-			if (collListsContainsCollocateList(colls)) {
-				return;
-			}
+		// test if the batch is already exists
+		if (collListsContainsCollocateList(colls)) {
+			return;
 		}
 		collocateList.add(colls);
 	}
@@ -382,10 +414,7 @@ public class CollocationalNetworker
 	/**
 	 * Redraw network graph content
 	 */
-	protected void redrawGraph() {
-		if (collocateList == null) {
-			return;
-		}
+	protected void redrawGraph() {		
 		colorIndex = 0;
 		networkGraph.clear();
 		
@@ -395,9 +424,7 @@ public class CollocationalNetworker
 			createGraphDataFrom(list);
 		}
 		
-		//adjustNodeSizeByDegree();
-		adjustConnectionWeight();
-		
+		//adjustConnectionWeight();
 		nodesData.clear();
 		
 		networkGraph.setLayoutAlgorithm(CAPrefs.NETWORK_LAYOUT.getAlgorithm(), false);
@@ -410,32 +437,6 @@ public class CollocationalNetworker
 			dataPanel.update();
 		}
 	}
-
-	
-	
-	/**
-	 * Adjust node size by degree (number of connections).
-	 */
-	/*
-	private void adjustNodeSizeByDegree() {
-		int max = 0;
-		int min = Integer.MAX_VALUE;
-		
-		// obtain max and min degrees
-		for (Map.Entry<String, CAGraphNode> entry : nodesData.entrySet()) {
-			int d = entry.getValue().getDegree();
-			if (d > max) max = d;
-			if (d < min) min = d;
-		}
-		
-		// resize
-		for  (Map.Entry<String, CAGraphNode> entry : nodesData.entrySet()) {
-			CAGraphNode node = entry.getValue();
-			int size = (node.getDegree() - min) * (CAPrefs.NETWORK_MAX_NODE_SIZE - CAPrefs.NETWORK_MIN_NODE_SIZE) / (max - min == 0 ? 1 : max - min) + CAPrefs.NETWORK_MIN_NODE_SIZE;
-			node.setShapeSize(size, size);
-		}
-	}
-	*/
 	
 	/**
 	 * Returns next color defined in color schemes.
@@ -503,8 +504,17 @@ public class CollocationalNetworker
 				conn.setLineColor(FigureUtilities.mixColors(networkGraph.getBackground(), FigureUtilities.lighter(nodeColor)));
 				conn.setLineColor(conn.getLineColor());
 				conn.setHighlightColor(FigureUtilities.lighter(nodeColor));
+				String value = "";
+				switch (CAPrefs.NETWORK_COMPARATOR) {
+				case Cooccurrence:
+					value = Formats.getNumberFormat((long) CAPrefs.NETWORK_COMPARATOR.getValue(coll));
+					break;
+				default:
+					value = Formats.getDecimalFormat(CAPrefs.NETWORK_COMPARATOR.getValue(coll));
+					break;
+				}
 				IFigure tooltip = new Label(nodeWord.getText() + " - " + node.getText() + "\n" + 
-											Formats.getDecimalFormat(CAPrefs.NETWORK_COMPARATOR.getValue(coll)));
+											value);
 				conn.setTooltip(tooltip);
 				conn.setData("colorIndex", listIndex);
 				conn.setData("collocate", coll);
@@ -514,11 +524,10 @@ public class CollocationalNetworker
 
 	
 	
-	/**
+	/*
 	 * Adjust connection weight.
-	 */
+	 * TODO weight
 	private void adjustConnectionWeight() {
-		/* TODO weight
 		for(Iterator iterator = networkGraph.getConnections().iterator(); 
 				iterator.hasNext(); ) {
 			Object edge = iterator.next();
@@ -529,7 +538,6 @@ public class CollocationalNetworker
 				conn.setWeight(weight);
 			}
 		}
-		*/
 	}
-	
+	*/
 }

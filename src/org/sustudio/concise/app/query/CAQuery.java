@@ -33,10 +33,6 @@ public class CAQuery implements Serializable {
 	/** Right Span Size */
 	public int rightSpanSize = CCPrefs.SPAN_SIZE_RIGHT;
 	
-	/** @deprecated 
-	 *  If Lemmatization is On */
-	public boolean lemmatize = false;
-	
 	/** If N-gram is On */
 	public boolean ngram = false;
 	
@@ -51,6 +47,8 @@ public class CAQuery implements Serializable {
 		switch(gear) {
 		case Concordancer:
 		case ConcordancePlotter:
+		case WordTrender:
+		case ScatterPlotter:
 		case Collocator:
 		case CollocationalNetworker:
 		case WordCluster:
@@ -73,7 +71,6 @@ public class CAQuery implements Serializable {
 		searchAction = query.searchAction;
 		leftSpanSize = query.leftSpanSize;
 		rightSpanSize = query.rightSpanSize;
-		lemmatize = query.lemmatize;
 		ngram = query.ngram;
 	}
 	
@@ -91,7 +88,6 @@ public class CAQuery implements Serializable {
 			query.searchAction != searchAction ||
 			query.leftSpanSize != leftSpanSize ||
 			query.rightSpanSize != rightSpanSize ||
-			query.lemmatize != lemmatize ||
 			query.ngram != ngram 
 			) {
 			

@@ -9,6 +9,7 @@
 package org.sustudio.concise.app.gear.wordClouder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -17,11 +18,6 @@ import org.eclipse.gef4.cloudio.TagCloudViewer;
 import org.eclipse.gef4.cloudio.Word;
 import org.eclipse.gef4.cloudio.layout.DefaultLayouter;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -32,15 +28,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.ColorDialog;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.FontDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.wb.swt.SWTResourceManager;
+import org.sustudio.concise.app.gear.wordClouder.CAFontScheme.FontChangedEvent;
+import org.sustudio.concise.app.gear.wordClouder.CAFontScheme.FontChangedListener;
 import org.sustudio.concise.app.gear.wordClouder.WordClouder.CloudLabelProvider;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.utils.ColorImage;
@@ -107,36 +102,6 @@ public class CloudOptionsComposite extends Composite {
 		for (int i = 0; i < fonts.size(); i++) {
 			CAPrefs.CLOUDER_FONTS[i] = fonts.get(i).toString();
 		}
-	}
-	
-	private static class ListContentProvider implements ITreeContentProvider {
-
-		@Override
-		public void dispose() {}
-
-		@Override
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {}
-
-		@Override
-		public Object[] getElements(Object inputElement) {
-			return ((List<?>) inputElement).toArray();
-		}
-
-		@Override
-		public Object[] getChildren(Object parentElement) {
-			return null;
-		}
-
-		@Override
-		public Object getParent(Object element) {
-			return null;
-		}
-
-		@Override
-		public boolean hasChildren(Object element) {
-			return false;
-		}
-
 	}
 	
 	protected Group addLayoutButtons() {
@@ -363,7 +328,7 @@ public class CloudOptionsComposite extends Composite {
 		sel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		sel.setText("Selection");
 		sel.setImage(ColorImage.createImage(viewer.getCloud().getSelectionColor(), 16, 16));
-		sel.addSelectionListener(new SelectionListener() {
+		sel.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -380,9 +345,6 @@ public class CloudOptionsComposite extends Composite {
 				sel.setImage(newImage);
 				oldImage.dispose();
 			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
 		});
 		sel.setFont(getFont());
 		return buttons;
@@ -390,77 +352,31 @@ public class CloudOptionsComposite extends Composite {
 	
 	protected Group addFontButtons() {
 		Group buttons = new Group(this, SWT.SHADOW_IN);
-		buttons.setLayout(new GridLayout(2, false));
+		buttons.setLayout(new GridLayout(1, false));
 		buttons.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		Label l = new Label(buttons, SWT.NONE);
-		l.setText("Fonts");
-		l.setFont(getFont());
-		GridData gd = new GridData();
-		gd.horizontalSpan=2;
-		l.setLayoutData(gd);
-		final TreeViewer tv = new TreeViewer(buttons);
-		tv.getTree().setFont(getFont());
-		Composite comp = new Composite(buttons, SWT.NONE);
-		comp.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, true));
-		comp.setLayout(new RowLayout(SWT.VERTICAL));
-		tv.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		ListContentProvider cp = new ListContentProvider();
-		tv.setContentProvider(cp);
-		tv.setLabelProvider(new ColumnLabelProvider() {
-			
-			@Override
-			public String getText(Object element) {
-				FontData fd = (FontData) element;
-				return fd.getName();
-			}
-			
-		});
-		tv.setInput(fonts);
-		Button add = new Button(comp, SWT.FLAT);
-		add.setImage(SWTResourceManager.getImage(CloudOptionsComposite.class, "/org/sustudio/concise/app/icon/10-medical.png"));
-		add.setToolTipText("Add font...");
-		add.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				FontDialog fd = new FontDialog(getShell());
-				FontData fontData = fd.open();
-				if(fontData != null) {
-					fonts.add(fontData);
-					updateCloudFontsPreference();
-					tv.setInput(fonts);
-					updateFonts();
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
-		});
-		add.setFont(getFont());
-		Button remove = new Button(comp, SWT.FLAT);
-		remove.setToolTipText("Remove selected fonts");
-		remove.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				IStructuredSelection selection = (IStructuredSelection) tv.getSelection();
-				fonts.removeAll(selection.toList());
+		
+		CAFontScheme fontScheme = new CAFontScheme(buttons, SWT.NONE);
+		fontScheme.setText("Font");
+		fontScheme.setFontsData(CAPrefs.CLOUDER_FONTS);
+		fontScheme.addFontChangedListener(new FontChangedListener() {
+
+			@Override public void fontChanged(FontChangedEvent event) {
+				fonts = Arrays.asList(event.getFontsData());
 				updateCloudFontsPreference();
-				tv.setInput(fonts);
-				updateFonts();
+				if (viewer.getInput() == null) return;
+				CloudLabelProvider lp = (CloudLabelProvider) viewer.getLabelProvider();
+				lp.setFonts(fonts);
+				List<Word> words = viewer.getCloud().getWords();
+				for (Word word : words) {
+					int height = word.getFontData()[0].getHeight();
+					FontData[] fdata = lp.getFontData(word.data);
+					fdata[0].setHeight(height);;
+					word.setFontData(fdata);
+				}
+				viewer.getCloud().redrawTextLayerImage();
 			}
 			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
 		});
-		remove.setImage(SWTResourceManager.getImage(CloudOptionsComposite.class, "/org/sustudio/concise/app/icon/201-remove.png"));
-		remove.setFont(getFont());
 		return buttons;
 	}
-
-	protected void updateFonts() {
-		IEditableCloudLabelProvider lp = (IEditableCloudLabelProvider) viewer.getLabelProvider();
-		lp.setFonts(fonts);
-	}
-
 }

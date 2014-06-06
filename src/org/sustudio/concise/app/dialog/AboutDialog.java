@@ -19,12 +19,12 @@ import org.sustudio.concise.app.utils.Platform;
 /**
  * About Concise Dialog. (System Menu)
  */
-public class CAAboutDialog extends Shell {
+public class AboutDialog extends Shell {
 
 	/**
 	 * Create About Concise Dialog.
 	 */
-	public CAAboutDialog() {
+	public AboutDialog() {
 		super(Display.getCurrent(), SWT.DIALOG_TRIM | SWT.ON_TOP);
 		
 		// disable full screen icon
@@ -42,7 +42,7 @@ public class CAAboutDialog extends Shell {
 		
 		Label lblConciseImage = new Label(this, SWT.NONE);
 		lblConciseImage.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false, 1, 1));
-		lblConciseImage.setImage(SWTResourceManager.getImage(CAAboutDialog.class, "/org/sustudio/concise/app/icon/concise.png"));
+		lblConciseImage.setImage(SWTResourceManager.getImage(AboutDialog.class, "/org/sustudio/concise/app/icon/concise.png"));
 		
 		Label lblConcise = new Label(this, SWT.NONE);
 		lblConcise.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false, 1, 1));

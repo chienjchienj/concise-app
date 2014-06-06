@@ -41,15 +41,6 @@ public class CAOpenFilesDialog extends FileDialog {
 		setText("Browse Concise Workspace");
 	}
 	
-	/** 
-	 * @deprecated
-	 */
-	public void setLoadPreferencesConfigure() {
-		setFilterNames(new String[] { "Concise Preferences (.pref)" } );
-		setFilterExtensions(new String[] { "*.cpref" } );
-		setText("Load Concise Preferences");
-	}
-	
 	public void setOpenPOSTaggerConfigure() {
 		setFilterExtensions(new String[] { "*.tagger", "*.*" } );
 		setFilterNames(new String[] { "POS Tagger (*.tagger)", "All Files (*.*)" });

@@ -64,8 +64,10 @@ public class CAToolBarGearToolItem extends ToolItem {
 			addItem(Gear.ReferenceCorpusManager);
 			addSeparator();
 			addItem(Gear.ConcordancePlotter);
+			addItem(Gear.WordTrender);
 			addItem(Gear.WordClouder);
 			addItem(Gear.CollocationalNetworker);
+			addItem(Gear.ScatterPlotter);
 			addSeparator();
 			addItem(Gear.DocumentViewer);
 			addItem(Gear.LemmaEditor);

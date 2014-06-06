@@ -63,7 +63,10 @@ public class SQLiteDB {
 	
 	public static int executeUpdate(String sql) throws SQLException, IOException {
 		Statement s = Concise.getCurrentWorkspace().getConnection().createStatement();
-		return s.executeUpdate(sql);
+		int ret = s.executeUpdate(sql);
+		Concise.getCurrentWorkspace().getConnection().commit();
+		s.close();
+		return ret;
 	}
 	
 	public static PreparedStatement prepareStatement(CATable table) throws SQLException, IOException {
@@ -170,5 +173,11 @@ public class SQLiteDB {
 		ps.setLong	(6, coll.getSignatureN());
 		ps.setLong	(7, coll.getNodeFreq());
 		ps.addBatch();
+	}
+	
+	public static void removeCollocationalNetworkNode(String node) throws SQLException, IOException {
+		String sql = "DELETE FROM " + CATable.CollocationalNetworker.name() + " WHERE " + DBColumn.Collocate.columnName() + " = '" + node + "'";
+		executeUpdate(sql);
+		Concise.getCurrentWorkspace().getConnection().commit();
 	}
 }

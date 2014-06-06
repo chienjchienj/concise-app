@@ -2,35 +2,36 @@ package org.sustudio.concise.app.thread;
 
 import org.eclipse.swt.widgets.Display;
 import org.sustudio.concise.app.Concise;
-import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.CAProgressDialog;
+import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 
-public abstract class CAThread extends Thread implements IKillable {
+public abstract class CAThread extends Thread {
 
 	protected Gear gear;
 	protected CAQuery query;
 	protected CAProgressDialog dialog;
-	protected boolean kill = false;
 	
 	public CAThread(Gear gear, CAQuery query) {
 		this.gear = gear;
 		this.query = query;
 		dialog = new CAProgressDialog(gear.getController(Concise.getCurrentWorkspace()));
-		
+		dialog.setCancelWarningMessage("Do you want to cancel current " + query.getGear() + " task?");
+		logQuery();
+	}
+	
+	protected void logQuery() {
 		// log query to database
-		try 
-		{
+		try {
 			Concise.getCurrentWorkspace().logInfo(query.toString());
 			CAQueryUtils.logQuery(query);
 		
 		} catch (Exception e) {
-			CAErrorMessageDialog.open(gear, e);
+			Concise.getCurrentWorkspace().logError(gear, e);
+			Dialog.showException(e);
 		}
-		
-		dialog.setCancelWarningMessage("Do you want to cancel current " + query.getGear() + " task?");
 	}
 	
 	public void setCancelWarningMessage(String message) {
@@ -61,16 +62,12 @@ public abstract class CAThread extends Thread implements IKillable {
 	
 	public void start() {
 		dialog.open();
+		setDaemon(true);
 		super.start();
 	}
 	
-	public void kill() {
-		kill = true;
-		interrupt();
-		Concise.getCurrentWorkspace().logInfo(gear.label() + " process killed by user");
-	}
-	
-	public boolean isKilled() {
-		return kill;
+	public void interrupt() {
+		super.interrupt();
+		Concise.getCurrentWorkspace().logInfo(gear.label() + " process killed by user.");
 	}
 }

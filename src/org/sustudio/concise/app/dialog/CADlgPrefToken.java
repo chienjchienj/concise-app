@@ -36,8 +36,8 @@ public class CADlgPrefToken extends Composite {
 		Button btnShowPartofspeechTag = new Button(grpPartofspeech, SWT.CHECK);
 		btnShowPartofspeechTag.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1));
 		btnShowPartofspeechTag.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				CAPrefs.SHOW_PART_OF_SPEECH = ((Button) e.widget).getSelection();
+			public void widgetSelected(SelectionEvent event) {
+				CAPrefs.SHOW_PART_OF_SPEECH = ((Button) event.widget).getSelection();
 				text.setEnabled(CAPrefs.SHOW_PART_OF_SPEECH);
 				getShell().setModified(true);
 				getShell().setData("TokenChange", true);

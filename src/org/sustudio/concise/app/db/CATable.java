@@ -102,6 +102,13 @@ public enum CATable {
 					DBColumn.Per1000,
 					DBColumn.Filepath }),
 	
+	/** Word Trender */
+	WordTrender(new DBColumn[] {
+					DBColumn.Word }),
+					
+	/** Scatter Plotter */
+	ScatterPlotter(new DBColumn[] {
+					DBColumn.Word }),
 	;
 	
 	private final DBColumn[] defaultDBColumns;

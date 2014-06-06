@@ -23,6 +23,10 @@ import java.io.Writer;
 import java.util.Calendar;
 import java.util.List;
 
+import javafx.embed.swt.FXCanvas;
+import javafx.embed.swt.SWTFXUtils;
+import javafx.scene.image.WritableImage;
+
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Document;
@@ -93,6 +97,10 @@ public class SaveOutputHelper {
 			enabled = !((NetworkGraph) ctrl).getNodes().isEmpty();
 		}
 		
+		else if (ctrl instanceof FXCanvas) {
+			enabled = true;
+		}
+		
 		
 		if (saveOutputItem != null)
 			saveOutputItem.setEnabled(enabled);
@@ -106,6 +114,7 @@ public class SaveOutputHelper {
 			CASaveFileDialog dlg = new CASaveFileDialog();
 			switch (gear) {
 			case WordClouder:
+			case WordTrender:
 				dlg.setSaveImageConfigure();
 				break;
 				
@@ -189,6 +198,10 @@ public class SaveOutputHelper {
 			imageData = ((TagCloud) control).getImageData();
 		else if (control instanceof NetworkGraph)
 			imageData = ((NetworkGraph) control).getImageData();
+		else if (control instanceof FXCanvas) {
+			WritableImage writableImage = ((FXCanvas) control).getScene().snapshot(null);
+			imageData = SWTFXUtils.fromFXImage(writableImage, null);
+		}
 		else
 			throw new UnsupportedOperationException(gear.label() + " cannot output image data.");
 		

@@ -174,6 +174,7 @@ public abstract class GearController extends Composite {
 	public void dispose() {
 		ZoomHelper.removeControls(getZoomableControls());
 		gear.setGearView(workspace, null);
+		unloadData();
 		super.dispose();
 	}
 	

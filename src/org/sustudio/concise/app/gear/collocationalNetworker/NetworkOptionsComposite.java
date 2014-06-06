@@ -44,17 +44,17 @@ public class NetworkOptionsComposite extends Composite {
 		expandBar.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
 		expandBar.setFont(getFont());
 		
-		ExpandItem layoutItem = new ExpandItem(expandBar, SWT.NONE);
-		layoutItem.setExpanded(true);
-		layoutItem.setText("Layout");
-		layoutItem.setControl(addLayoutButtons(expandBar));
-		layoutItem.setHeight(layoutItem.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
-		
 		ExpandItem filterItem = new ExpandItem(expandBar, SWT.NONE);
 		filterItem.setExpanded(true);
 		filterItem.setText("Options");
 		filterItem.setControl(addFilterButtons(expandBar));
 		filterItem.setHeight(filterItem.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+		
+		ExpandItem layoutItem = new ExpandItem(expandBar, SWT.NONE);
+		layoutItem.setExpanded(true);
+		layoutItem.setText("Layout");
+		layoutItem.setControl(addLayoutButtons(expandBar));
+		layoutItem.setHeight(layoutItem.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
 		
 		ExpandItem associationFilterItem = new ExpandItem(expandBar, SWT.NONE);
 		associationFilterItem.setExpanded(false);
@@ -69,7 +69,6 @@ public class NetworkOptionsComposite extends Composite {
 		styleItem.setHeight(styleItem.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
 		
 	}
-
 	
 	private void addIntegerFilterSelection(Composite parent, final CollocateMeasurement measurement) 
 	{

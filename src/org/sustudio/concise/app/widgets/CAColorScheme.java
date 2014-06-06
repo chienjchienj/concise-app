@@ -3,8 +3,8 @@ package org.sustudio.concise.app.widgets;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.EventObject;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Vector;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
@@ -187,8 +187,7 @@ public class CAColorScheme extends Group {
 		table.setItemCount(colorRGBs.size());
 		table.redraw();
 		
-		for (int i = 0; i < colorChangedListeners.size(); i++) {
-			ColorChangedListener listener = colorChangedListeners.elementAt(i);
+		for (ColorChangedListener listener : colorChangedListeners) {
 			listener.colorChanged(new ColorChangedEvent(getColorScheme()));
 		}
 	}
@@ -279,14 +278,14 @@ public class CAColorScheme extends Group {
 	// Color Changed Listener
 	//////////////////////////////////////////////////////////////
 	
-	Vector<ColorChangedListener> colorChangedListeners = new Vector<ColorChangedListener>();
+	HashSet<ColorChangedListener> colorChangedListeners = new HashSet<ColorChangedListener>();
 	
 	/**
 	 * Add a {@Link ColorChangedListener} to {@link CAColorScheme}.
 	 * @param listener
 	 */
 	public void addColorChangedListener(ColorChangedListener listener) {
-		colorChangedListeners.addElement(listener);
+		colorChangedListeners.add(listener);
 	}
 	
 	/**
@@ -294,7 +293,7 @@ public class CAColorScheme extends Group {
 	 * @param listener
 	 */
 	public void removeColorChangedListener(ColorChangedListener listener) {
-		colorChangedListeners.removeElement(listener);
+		colorChangedListeners.remove(listener);
 	}
 	
 	/**

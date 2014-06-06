@@ -48,7 +48,7 @@ public class PlotterThread extends CAThread {
 			final String postTag = "</>";
 			for (ScoreDoc scoreDoc : conc.hitDocs()) 
 			{
-				if (isKilled()) {
+				if (isInterrupted()) {
 					break;
 				}
 				
@@ -101,7 +101,7 @@ public class PlotterThread extends CAThread {
 						wordsCount++;
 				}
 				
-				File file = new File(doc.get(ConciseField.FILEPATH.field()));
+				File file = new File(doc.get(ConciseField.FILENAME.field()));
 				String filepath = CAPrefs.SHOW_FULL_FILEPATH ? file.getCanonicalPath() : file.getName();
 				
 				ps.setInt	(1, docID);

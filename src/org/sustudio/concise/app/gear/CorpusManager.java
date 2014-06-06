@@ -10,8 +10,6 @@ import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.index.IndexReader;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
@@ -76,33 +74,26 @@ public class CorpusManager
 		
 		final TableColumn tblclmnTitle = new TableColumn(table, SWT.NONE);
 		tblclmnTitle.setMoveable(true);
-		tblclmnTitle.setWidth(380);
+		tblclmnTitle.setWidth(520);
 		tblclmnTitle.setText("Title");
 		tblclmnTitle.setData(_DB_COLUMN, DBColumn.Title);
 		tblclmnTitle.addSelectionListener(new ColumnSortListener());
 		
 		final TableColumn tblclmnWords = new TableColumn(table, SWT.RIGHT);
 		tblclmnWords.setMoveable(true);
-		tblclmnWords.setWidth(60);
+		tblclmnWords.setWidth(70);
 		tblclmnWords.setText("Words");
 		tblclmnWords.setData(_DB_COLUMN, DBColumn.NumWords);
 		tblclmnWords.addSelectionListener(new ColumnSortListener());
 		
 		final TableColumn tblclmnParagraphs = new TableColumn(table, SWT.RIGHT);
 		tblclmnParagraphs.setMoveable(true);
-		tblclmnParagraphs.setWidth(60);
+		tblclmnParagraphs.setWidth(70);
 		tblclmnParagraphs.setText("Paragraphs");
 		tblclmnParagraphs.setData(_DB_COLUMN, DBColumn.NumParagraphs);
 		tblclmnParagraphs.addSelectionListener(new ColumnSortListener());
 		
-		final TableColumn tblclmnDirectory = new TableColumn(table, SWT.NONE);
-		tblclmnDirectory.setMoveable(true);
-		tblclmnDirectory.setWidth(250);
-		tblclmnDirectory.setText("Directory");
-		tblclmnDirectory.setData(_DB_COLUMN, DBColumn.Filepath);
-		tblclmnDirectory.addSelectionListener(new ColumnSortListener());
-		
-		table.setSortColumn(tblclmnDirectory);
+		table.setSortColumn(tblclmnTitle);
 		table.setSortDirection(SWT.UP);
 		
 		table.addListener(SWT.SetData, new Listener() {
@@ -120,9 +111,11 @@ public class CorpusManager
 					item.setImage(1, new Image(getDisplay(), imageData));
 				}
 				
-				if (!new File(docList.get(index).filepath).exists()) {
-					item.setForeground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-				}
+				// TODO remove
+				// 把檔案複製到 workspace 後，已經不會有這個問題
+				//if (!new File(docList.get(index).filename).exists()) {
+				//	item.setForeground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+				//}
 			}
 		});
 		
@@ -166,21 +159,6 @@ public class CorpusManager
 			}
 		});
 		
-		table.addControlListener(new ControlAdapter() {
-
-			@Override
-			public void controlResized(ControlEvent arg0) {
-				int width = table.getClientArea().width;
-				for (TableColumn col : table.getColumns()) {
-					if (!tblclmnDirectory.equals(col)) {
-						width -= col.getWidth();
-					}
-				}
-				tblclmnDirectory.setWidth(width < 250 ? 250 : width);
-			}
-			
-		});
-		
 		return table;
 	}
 	
@@ -216,13 +194,13 @@ public class CorpusManager
 				PreparedStatement ps = SQLiteDB.prepareStatement(table);
 				
 				int count = 0;
-				for (ConciseDocument doc : new DocumentIterator(reader)) 
+				for (ConciseDocument doc : new DocumentIterator(workspace, reader)) 
 				{
 					ps.setInt	(1,  doc.docID);
 					ps.setString(2,  doc.title);
 					ps.setLong	(3,  doc.numWords);
 					ps.setLong	(4,  doc.numParagraphs);
-					ps.setString(5,  doc.filepath);
+					ps.setString(5,  doc.filename);
 					ps.setBoolean(6, doc.isTokenized);
 					ps.addBatch();
 					
@@ -269,9 +247,13 @@ public class CorpusManager
 				ConciseDocument doc = new ConciseDocument();
 				doc.docID = 		rs.getInt(		DBColumn.DocID.columnName());
 				doc.title = 		rs.getString(	DBColumn.Title.columnName());
-				doc.numWords = 		rs.getLong(		DBColumn.NumWords.columnName());
-				doc.numParagraphs = rs.getLong(		DBColumn.NumParagraphs.columnName());
-				doc.filepath = 		rs.getString(	DBColumn.Filepath.columnName());
+				doc.numWords = 		rs.getInt(		DBColumn.NumWords.columnName());
+				doc.numParagraphs = rs.getInt(		DBColumn.NumParagraphs.columnName());
+				doc.filename = 		rs.getString(	DBColumn.Filepath.columnName());
+				if (gear == Gear.CorpusManager)
+					doc.documentFile = new File(workspace.getOriginalDocFolder(), doc.filename);
+				else
+					doc.documentFile = new File(workspace.getOriginalRefFolder(), doc.filename);
 				docList.add(doc);
 			}
 			rs.close();
@@ -320,7 +302,7 @@ public class CorpusManager
 					doc.title,
 					Formats.getNumberFormat(doc.numWords),
 					Formats.getNumberFormat(doc.numParagraphs),
-					doc.filepath };
+				};
 			
 		} catch (Exception e) {
 			workspace.logError(gear, e);
@@ -333,7 +315,7 @@ public class CorpusManager
 	public boolean isRevealEnabled() {
 		if (table.getSelectionCount() == 1) {
 			final ConciseDocument doc = docList.get(table.getSelectionIndex());
-			if (new File(doc.filepath).exists()) {
+			if (doc.documentFile.exists()) {
 				return true;
 			}
 		}
@@ -345,7 +327,7 @@ public class CorpusManager
 		if (table.getSelectionCount() == 1) {
 			final ConciseDocument doc = docList.get(table.getSelectionIndex());
 			try {
-				RevealInFinder.show(doc.filepath);
+				RevealInFinder.show(doc.documentFile);
 			} catch (IOException e) {
 				workspace.logError(gear, e);
 				Dialog.showException(e);

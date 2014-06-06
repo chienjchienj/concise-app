@@ -1,5 +1,7 @@
 package org.sustudio.concise.app.toolbar;
 
+import java.io.IOException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
@@ -11,7 +13,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -29,6 +30,7 @@ import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.toolbar.CAToolBarGoToolItem.MODE;
 import org.sustudio.concise.app.utils.Platform;
+import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 
 public class CAToolBar {
 	
@@ -36,7 +38,7 @@ public class CAToolBar {
 	private final Spinner rightSpan;
 	private final CAToolBarGoToolItem tltmGo;
 	private final ToolItem tltmNgram;
-	private final Text txtSearch;
+	private final CAAutoCompleteText txtSearch;
 	
 	private Gear gear;
 		
@@ -59,18 +61,23 @@ public class CAToolBar {
 			toolBar = new ToolBar(app, SWT.SMOOTH);
 		}
 		
-		ToolItem tltmImport = new ToolItem(toolBar, SWT.NONE);
+		final ToolItem tltmImport = new ToolItem(toolBar, SWT.NONE);
 		tltmImport.setImage(SWTResourceManager.getImage(CAToolBar.class, "/org/sustudio/concise/app/icon/40-inbox-20x20.png"));
 		tltmImport.setText(CABundle.get("toolbar.import"));
 		tltmImport.setToolTipText("Import Corpus");
 		tltmImport.addSelectionListener(CorpusManipulation.ImportDocuments.selectionAdapter());
 		
-		
-		txtSearch = new Text(toolBar, SWT.BORDER | SWT.SEARCH | SWT.CANCEL);
+		txtSearch = new CAAutoCompleteText(toolBar, SWT.BORDER | SWT.SEARCH | SWT.CANCEL);
 		PromptSupport.setPrompt("search", txtSearch);
 		txtSearch.addSelectionListener(new CAToolBarSearchActionListener());
 		CopyPasteHelper.listenTo(txtSearch);
-		TextAutoCompleterHelper.listenTo(txtSearch);
+		try {
+			txtSearch.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+		} catch (IOException e) {
+			Concise.getCurrentWorkspace().logError(null, e);
+			Dialog.showException(e);
+		}
+		
 		
 		leftSpan = new Spinner(toolBar, SWT.BORDER);
 		leftSpan.setPageIncrement(5);
@@ -186,6 +193,8 @@ public class CAToolBar {
 			switch (gear) {
 			case Concordancer:
 			case ConcordancePlotter:
+			case WordTrender:
+			case ScatterPlotter:
 			case Collocator:
 			case CollocationalNetworker:
 				tltmGo.setMode(MODE.SEARCH);
@@ -211,6 +220,8 @@ public class CAToolBar {
 			switch (gear) {
 			case Concordancer:
 			case ConcordancePlotter:
+			case WordTrender:
+			case ScatterPlotter:
 			case Collocator:
 			case CollocationalNetworker:
 				txtSearch.setEnabled(true);
@@ -234,6 +245,8 @@ public class CAToolBar {
 			////////////////////////////////////////////////////////////////////////////
 			switch(gear) {
 			case ConcordancePlotter:
+			case WordTrender:
+			case ScatterPlotter:
 				leftSpan.setEnabled(false);
 				rightSpan.setEnabled(false);
 				break;
@@ -247,7 +260,7 @@ public class CAToolBar {
 				rightSpan.setEnabled(txtSearch.getEnabled());
 			}
 			leftSpan.setSelection(query.leftSpanSize);
-			rightSpan.setSelection(query.rightSpanSize);
+			rightSpan.setSelection(query.rightSpanSize);			
 			
 		} catch (Exception e) {
 			Concise.getCurrentWorkspace().logError(getGear(), e);

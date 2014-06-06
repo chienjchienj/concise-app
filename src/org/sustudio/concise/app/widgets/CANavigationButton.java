@@ -11,13 +11,13 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.mihalis.opal.roundedToolbar.RoundedToolItem;
 import org.mihalis.opal.roundedToolbar.RoundedToolbar;
 import org.mihalis.opal.utils.AdvancedPath;
-import org.mihalis.opal.utils.SWTGraphicUtil;
 
 /**
  * Prev and Next Navigation Button
@@ -27,7 +27,7 @@ import org.mihalis.opal.utils.SWTGraphicUtil;
  */
 public class CANavigationButton extends RoundedToolbar {
 
-	private static final Color BORDER_COLOR = SWTGraphicUtil.createDisposableColor(157, 157, 157);;
+	private static final Color BORDER_COLOR = new Color(Display.getCurrent(), 157, 157, 157);
 
 	private final Vector<NavigationListener> navListeners = new Vector<NavigationListener>();
 	

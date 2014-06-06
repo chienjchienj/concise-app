@@ -9,7 +9,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.sustudio.concise.app.Concise;
-import org.sustudio.concise.app.dialog.CAAboutDialog;
+import org.sustudio.concise.app.dialog.AboutDialog;
 import org.sustudio.concise.app.dialog.CAPreferencesDialog;
 
 /**
@@ -20,7 +20,7 @@ import org.sustudio.concise.app.dialog.CAPreferencesDialog;
  */
 public class SystemMenu {
 
-	private static CAAboutDialog about;
+	private static AboutDialog about;
 	private static CAPreferencesDialog preferences;
 	
 	/**
@@ -34,7 +34,7 @@ public class SystemMenu {
 			iAbout.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					if (about == null || about.isDisposed()) {
-						about = new CAAboutDialog();
+						about = new AboutDialog();
 						about.open();
 					}
 					else {

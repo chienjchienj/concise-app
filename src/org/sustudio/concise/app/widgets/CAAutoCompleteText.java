@@ -1,5 +1,6 @@
-package org.sustudio.concise.app.toolbar;
+package org.sustudio.concise.app.widgets;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -25,42 +27,39 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
-import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
-import org.sustudio.concise.core.Workspace;
+import org.sustudio.concise.app.dialog.Dialog;
+import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.wordlister.Word;
 
-public class TextAutoCompleterHelper {
+/**
+ * 依據 Lucene 的 IndexReader 給的 Dictionary ，給出自動完成的選項
+ * 
+ * @author Kuan-ming Su
+ *
+ */
+public class CAAutoCompleteText extends Text {
+
+	private IndexReader reader;
 	
-	public static void listenTo(final Text text) {
-		try {
-			Workspace workspace = Concise.getCurrentWorkspace();
-			if (workspace.getIndexReader() != null) {
-				listenTo(text, workspace.getIndexReader());
-			}
-			
-		} catch (Exception e) {
-			Concise.getCurrentWorkspace().logError(null, e);
-			Dialog.showException(e);
-		}
-	}
-	
-	public static void listenTo(final Text text, final IndexReader reader) {
-		FontData fd = text.getDisplay().getSystemFont().getFontData()[0];
+	public CAAutoCompleteText(Composite parent, int style) {
+		super(parent, style);
+		
+		FontData fd = getDisplay().getSystemFont().getFontData()[0];
 		fd.setHeight(fd.getHeight() - 2);
-		final Font numberFont = new Font(text.getDisplay(), fd);
+		final Font numberFont = new Font(getDisplay(), fd);
 		final Color numberColor = SWTResourceManager.getColor(SWT.COLOR_DARK_GRAY);
 		
-		final Shell popupShell = new Shell(text.getShell(), SWT.TOOL | SWT.NO_TRIM);
+		final Shell popupShell = new Shell(getShell(), SWT.TOOL | SWT.NO_TRIM);
 		popupShell.setLayout(new FillLayout());
 		final Table table = new Table(popupShell, SWT.SINGLE);
 		table.setHeaderVisible(false);
 		
 		new TableColumn(table, SWT.NONE);
 		new TableColumn(table, SWT.RIGHT);
-						
-		text.addKeyListener(new KeyAdapter() {
+		
+		addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent event) {
 				int textSelection = 0;
 				switch (event.keyCode) {
@@ -69,29 +68,29 @@ public class TextAutoCompleterHelper {
 					if (table.getSelectionIndex() != -1) {
 						index = (table.getSelectionIndex() + 1) % table.getItemCount();
 					}
-					table.setSelection(index);
+					table.select(index);
 					if (table.getSelectionCount() > 0) {
-						text.setText(table.getSelection()[0].getText());
-						textSelection = text.getText().length();
-						text.setSelection(textSelection);
+						setText(table.getSelection()[0].getText());
+						textSelection = getText().length();
+						setSelection(textSelection);
 					}
 					event.doit = false;
 					return;
 				case SWT.ARROW_UP:
 					index = table.getSelectionIndex() - 1;
 					if (index < 0) index = table.getItemCount() - 1;
-					table.setSelection(index);
+					table.select(index);
 					if (table.getSelectionCount() > 0) {
-						text.setText(table.getSelection()[0].getText());
-						textSelection = text.getText().length();
-						text.setSelection(textSelection);
+						setText(table.getSelection()[0].getText());
+						textSelection = getText().length();
+						setSelection(textSelection);
 					}
 					event.doit = false;
 					return;
 				case SWT.CR:
 				case SWT.KEYPAD_CR:
 					if (popupShell.isVisible() && table.getSelectionIndex() != -1) {
-						text.setText(table.getSelection()[0].getText());
+						setText(table.getSelection()[0].getText());
 						popupShell.setVisible(false);
 					}
 					return;
@@ -101,7 +100,7 @@ public class TextAutoCompleterHelper {
 				}
 				
 				
-				String string = text.getText().trim();
+				String string = getText().trim();
 				if (string.isEmpty()) {
 					popupShell.setVisible(false);
 				}
@@ -109,13 +108,16 @@ public class TextAutoCompleterHelper {
 					List<Word> result = new ArrayList<Word>();
 					try {
 						
-						result = AutoCompleter.getInstanceFor(reader).lookup(string, 7);
+						if (reader != null)
+						result = AutoCompleter.getInstanceFor(reader, CAPrefs.SHOW_PART_OF_SPEECH).lookup(string, 7);
 						
 					} catch (Exception e) {
 						if (e instanceof AlreadyClosedException) {
 							try {
-								Workspace workspace = Concise.getCurrentWorkspace();
-								result = AutoCompleter.getInstanceFor(workspace.getIndexReader()).lookup(string, 7);
+								AutoCompleter.removeInstanceFor(reader);
+								
+								reader = Concise.getCurrentWorkspace().getIndexReader();
+								result = AutoCompleter.getInstanceFor(reader, CAPrefs.SHOW_PART_OF_SPEECH).lookup(string, 7);
 								
 							} catch (Exception e1) {
 								// This should not happen
@@ -141,9 +143,9 @@ public class TextAutoCompleterHelper {
 						item.setFont(1, numberFont);
 						item.setForeground(1, numberColor);
 					}
-					popupShell.setBounds(text.toDisplay(0, 0).x,
-										 text.toDisplay(0, 0).y + text.getBounds().height,
-										 text.getBounds().width, 
+					popupShell.setBounds(toDisplay(0, 0).x,
+										 toDisplay(0, 0).y + getBounds().height,
+										 getBounds().width, 
 										 table.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
 					popupShell.setVisible(true);
 				}
@@ -152,7 +154,7 @@ public class TextAutoCompleterHelper {
 		
 		table.addSelectionListener(new SelectionAdapter() {
 			public void widgetDefaultSelected(SelectionEvent event) {
-				text.setText(table.getSelection()[0].getText());
+				setText(table.getSelection()[0].getText());
 				popupShell.setVisible(false);
 			}
 		});
@@ -168,11 +170,11 @@ public class TextAutoCompleterHelper {
 		FocusAdapter focusOutListener = new FocusAdapter() {
 			public void focusLost(FocusEvent event) {
 				// async is needed to wait until focus reaches its new Control
-				text.getDisplay().asyncExec(new Runnable() {
+				getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						if (text.isDisposed() || text.getDisplay().isDisposed()) return;
-						Control control = text.getDisplay().getFocusControl();
-						if (control == null || (control != text && control != table)) {
+						if (isDisposed() || getDisplay().isDisposed()) return;
+						Control control = getDisplay().getFocusControl();
+						if (control == null || (control != CAAutoCompleteText.this && control != table)) {
 							popupShell.setVisible(false);
 						}
 					}
@@ -180,7 +182,7 @@ public class TextAutoCompleterHelper {
 			}
 		};
 		table.addFocusListener(focusOutListener);
-		text.addFocusListener(focusOutListener);
+		addFocusListener(focusOutListener);
 		
 		table.addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent event) {
@@ -190,4 +192,22 @@ public class TextAutoCompleterHelper {
 		});
 	}
 	
+	
+	public void setIndexReader(IndexReader reader) {
+		if (this.reader != reader && this.reader != null) {
+			try {
+				AutoCompleter.removeInstanceFor(this.reader);
+			} catch (IOException e) {
+				Concise.getCurrentWorkspace().logError(null, e);
+				Dialog.showException(e);
+			}
+		}
+		this.reader = reader;
+	}
+	
+	
+	public void checkSubclass() {
+		// disable subclass check
+	}
+
 }

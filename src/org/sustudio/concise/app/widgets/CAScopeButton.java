@@ -19,13 +19,13 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.mihalis.opal.utils.AdvancedPath;
-import org.mihalis.opal.utils.SWTGraphicUtil;
 
 public class CAScopeButton extends Canvas {
 
@@ -34,7 +34,7 @@ public class CAScopeButton extends Canvas {
 	private static final int SPACING = 4;
 	private static final int ARROW_WIDTH = SPACING + 5;
 	
-	private static Color BORDER_COLOR = SWTGraphicUtil.createDisposableColor(157, 157, 157);;
+	private static Color BORDER_COLOR = new Color(Display.getCurrent(), 157, 157, 157);
 	
 	private int cornerRadius = 14;
 	private boolean enabled = true;

@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
@@ -18,6 +17,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.preferences.CAPrefsUtils;
 import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.collocation.Collocate;
 import org.sustudio.concise.core.collocation.CollocateIterator;
@@ -28,7 +28,7 @@ import org.sustudio.concise.core.concordance.Conc;
 
 public class CollocationalNetworkThread extends CAThread {
 
-	public boolean expandedSubNetwork = false;
+	public final boolean expandedSubNetwork;
 	
 	protected final Comparator<Collocate> comparator = new Comparator<Collocate>() {
 		public int compare(Collocate c1, Collocate c2) {
@@ -47,10 +47,21 @@ public class CollocationalNetworkThread extends CAThread {
 	public CollocationalNetworkThread(final CAQuery query, boolean expanded) {
 		super(Gear.CollocationalNetworker, query);
 		this.expandedSubNetwork = expanded;
+		
+		if (!expandedSubNetwork) {
+			try {
+				Concise.getCurrentWorkspace().logInfo(query.toString());
+				CAQueryUtils.logQuery(query);
+				
+			} catch (Exception e) {
+				Concise.getCurrentWorkspace().logError(gear, e);
+				Dialog.showException(e);
+			}
+		}
 	}
-
-	public void setExpanded(boolean expanded) {
-		this.expandedSubNetwork = expanded;
+	
+	protected void logQuery() {
+		// disable default query log
 	}
 	
 	
@@ -136,17 +147,14 @@ public class CollocationalNetworkThread extends CAThread {
 		CollocateIterator collocateIterator = getCollocateIterator(conc);
 		
 		// node 另計
-		Set<String> searchWords = conc.getSearchWords();
 		ArrayList<Collocate> nodes = new ArrayList<Collocate>();
 		for (Collocate collocate : collocateIterator) 
 		{
-			if (isKilled()) {
+			if (isInterrupted()) {
 				break;
 			}
 			
-			if (collocate.getNodeFreq() > 0 || searchWords.contains(collocate.getWord())) {
-				if (collocate.getNodeFreq() == 0)
-					collocate.setNodeFreq(collocate.getFreq());
+			if (collocate.getNodeFreq() > 0) {
 				nodes.add(collocate);
 				
 				// add to processed node words
@@ -199,7 +207,7 @@ public class CollocationalNetworkThread extends CAThread {
 		WordAtDepth wordAtDepth = null;
 		while ( (wordAtDepth = wordsTodo.poll()) != null ) 
 		{
-			if (isKilled()) {
+			if (isInterrupted()) {
 				break;
 			}
 			
@@ -217,7 +225,7 @@ public class CollocationalNetworkThread extends CAThread {
 				Collocate node = null;
 				CollocateIterator collocateIterator = getCollocateIterator(conc);
 				for (Collocate collocate : collocateIterator) {
-					if (isKilled()) {
+					if (isInterrupted()) {
 						break;
 					}
 					

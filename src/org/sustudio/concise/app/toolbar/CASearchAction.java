@@ -1,5 +1,8 @@
 package org.sustudio.concise.app.toolbar;
 
+import org.sustudio.concise.app.Concise;
+import org.sustudio.concise.app.gear.ScatterPlotter;
+import org.sustudio.concise.app.gear.WordTrender;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.CAClusterThread;
 import org.sustudio.concise.app.thread.CollocationThread;
@@ -17,21 +20,29 @@ public class CASearchAction {
 		CAThread thread = null;
 		switch (query.getGear()) {
 		case Collocator:	
-			thread = new CollocationThread(query);							break;
+			thread = new CollocationThread(query);			break;
 		case Concordancer:	
-			thread = new CAConcThread(query);							break;
+			thread = new CAConcThread(query);				break;
 		case WordCluster:	
-			thread = new CAClusterThread(query);						break;
+			thread = new CAClusterThread(query);			break;
 		case WordLister:	
-			thread = new WordListerThread(query);						break;
+			thread = new WordListerThread(query);			break;
 		case WordClouder:	
-			thread = new WordListerThread(query);						break;
+			thread = new WordListerThread(query);			break;
 		case KeywordLister:	
-			thread = new CAKeywordThread(query);						break;
+			thread = new CAKeywordThread(query);			break;
 		case CollocationalNetworker:	
-			thread = new CollocationalNetworkThread(query);				break;
+			thread = new CollocationalNetworkThread(query);	break;
 		case ConcordancePlotter:
-			thread = new PlotterThread(query);							break;
+			thread = new PlotterThread(query);				break;
+		case WordTrender:
+			((WordTrender) query.getGear().getController(Concise.getCurrentWorkspace()))
+			.doit(query);
+			break;
+		case ScatterPlotter:
+			((ScatterPlotter) query.getGear().getController(Concise.getCurrentWorkspace()))
+			.doit(query);
+			break;
 		default:			break;
 		}
 		

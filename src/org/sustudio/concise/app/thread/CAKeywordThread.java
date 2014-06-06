@@ -31,7 +31,7 @@ public class CAKeywordThread extends CAThread {
 			Workspace workspace = Concise.getCurrentWorkspace();
 			KeywordIterator iterator = new KeywordIterator(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
 			for (Keyword keyword : iterator) {
-				if (isKilled()) {
+				if (isInterrupted()) {
 					break;
 				}
 				

@@ -17,11 +17,13 @@ import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CorpusManipulation;
 import org.sustudio.concise.app.gear.Gear;
+import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
+import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
 import org.sustudio.concise.core.corpus.importer.Importer;
 
@@ -51,14 +53,19 @@ public class CAImportThread extends CAThread {
 			}
 			
 			// load existing files to check duplication
-			ArrayList<File> existingFiles = new ArrayList<File>();
+			// using MD5 to check 
+			ArrayList<String> existingMD5s = new ArrayList<String>();
 			try {
 				Directory directory = FSDirectory.open(indexDir);
 				IndexReader reader = DirectoryReader.open(directory);
 				for (int i=0; i<reader.maxDoc(); i++) {
 					Document document = reader.document(i);
-					if (document == null) continue;
-					existingFiles.add(new File(document.get(ConciseField.FILEPATH.field())));
+					if (document == null) continue;	// deleted document
+					
+					// TODO ConciseField.FIELDPATH 應該存成 relative path (
+					File file = new File(document.get(ConciseField.FILENAME.field()));
+					String md5 = ConciseFileUtils.getMD5(file);
+					existingMD5s.add(md5);
 				}
 				reader.close();
 				directory.close();
@@ -70,26 +77,28 @@ public class CAImportThread extends CAThread {
 			
 			dialog.setStatus("load settings...");
 			Importer importer = new Importer(workspace, indexDir);
-			for (File file : files) {
-				if (isKilled()) {
+			for (File sourceFile : files) {
+				if (isInterrupted()) {
 					break;
 				}
-				if (!existingFiles.contains(file)) {
-					dialog.setStatus(ArrayUtils.indexOf(files, file)+"/"+files.length+" "+file.getName());
-					importer.indexFile(file, manipulation.isTokenized());
+				
+				String sourceMD5 = ConciseFileUtils.getMD5(sourceFile);
+				if (!existingMD5s.contains(sourceMD5)) {
+					dialog.setStatus(ArrayUtils.indexOf(files, sourceFile)+"/"+files.length+" "+sourceFile.getName());
+					importer.indexFile(sourceFile, manipulation.isTokenized());
 				}
 			}
 			importer.close();
 			importer = null;
 			
-			existingFiles.clear();
-			existingFiles = null;
+			existingMD5s.clear();
+			existingMD5s = null;
 			
 			dialog.setStatus("re-open index directory...");
 			if (gear == Gear.CorpusManager) {
 				workspace.reopenIndexReader();
 				if (workspace.getIndexReader() != null) {
-					AutoCompleter.getInstanceFor(workspace.getIndexReader());
+					AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
 				}
 			}
 			else if (gear == Gear.ReferenceCorpusManager) {
@@ -106,13 +115,13 @@ public class CAImportThread extends CAThread {
 			PreparedStatement ps = SQLiteDB.prepareStatement(table);
 			
 			int count = 0;
-			for (ConciseDocument doc : new DocumentIterator(manipulation.indexReader())) 
+			for (ConciseDocument doc : new DocumentIterator(workspace, manipulation.indexReader())) 
 			{
 				ps.setInt	(1,  doc.docID);
 				ps.setString(2,  doc.title);
 				ps.setLong	(3,  doc.numWords);
 				ps.setLong	(4,  doc.numParagraphs);
-				ps.setString(5,  doc.filepath);
+				ps.setString(5,  doc.filename);
 				ps.setBoolean(6, doc.isTokenized);
 				ps.addBatch();
 				

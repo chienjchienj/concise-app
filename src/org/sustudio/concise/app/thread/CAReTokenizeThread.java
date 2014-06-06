@@ -70,7 +70,7 @@ public class CAReTokenizeThread extends CAThread {
 			handleIndex(Workspace.INDEX.DOCUMENT);
 			handleIndex(Workspace.INDEX.REFERENCE);
 			
-			AutoCompleter.getInstanceFor(workspace.getIndexReader());
+			AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
 			
 		} catch (Exception e) {
 			CAErrorMessageDialog.open(gear, e);
@@ -103,7 +103,7 @@ public class CAReTokenizeThread extends CAThread {
 			if (document == null) continue;
 			
 			boolean isTokenized = document.getField(ConciseField.IS_TOKENIZED.field()).numericValue().intValue() == 1;
-			File file = new File( document.get(ConciseField.FILEPATH.field()) );
+			File file = new File( document.get(ConciseField.FILENAME.field()) );
 			files.put(file, isTokenized);
 		}
 		
@@ -116,7 +116,7 @@ public class CAReTokenizeThread extends CAThread {
 		dialog.setStatus("load settings...");
 		Importer importer = new Importer(workspace, indexDir);
 		for (Map.Entry<File, Boolean> file : files.entrySet()) {
-			if (isKilled()) return;
+			if (isInterrupted()) return;
 			
 			// check availability
 			if (file.getKey().exists()) {
@@ -149,13 +149,13 @@ public class CAReTokenizeThread extends CAThread {
 		PreparedStatement ps = SQLiteDB.prepareStatement(table);
 		
 		int count = 0;
-		for (ConciseDocument doc : new DocumentIterator(reader)) 
+		for (ConciseDocument doc : new DocumentIterator(workspace, reader)) 
 		{
 			ps.setInt	(1,  doc.docID);
 			ps.setString(2,  doc.title);
 			ps.setLong	(3,  doc.numWords);
 			ps.setLong	(4,  doc.numParagraphs);
-			ps.setString(5,  doc.filepath);
+			ps.setString(5,  doc.filename);
 			ps.setBoolean(6, doc.isTokenized);
 			ps.addBatch();
 			

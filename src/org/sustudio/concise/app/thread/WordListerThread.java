@@ -36,7 +36,7 @@ public class WordListerThread extends CAThread {
 			// write to database
 			Workspace workspace = Concise.getCurrentWorkspace();
 			for (Word word : new WordIterator(workspace, CAPrefs.SHOW_PART_OF_SPEECH)) {
-				if (isKilled()) {
+				if (isInterrupted()) {
 					break;
 				}
 				

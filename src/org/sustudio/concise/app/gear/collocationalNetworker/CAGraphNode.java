@@ -22,7 +22,7 @@ public class CAGraphNode extends GraphNode {
 	}
 	
 	protected IFigure createFigureForModel() {
-		figure = new CANodeFigure((NetworkGraph) graph, getText());
+		figure = new CANodeFigure((NetworkGraph) parent, getText());
 		figure.setAlpha(191);
 		
 		// this seems a bug
@@ -100,7 +100,7 @@ public class CAGraphNode extends GraphNode {
 	 * Fade out node background color
 	 */
 	public void fadeOut() {
-		figure.setForegroundColor(FigureUtilities.mixColors(getBackgroundColor(), getGraphModel().getBackground()));
+		figure.setForegroundColor(FigureUtilities.mixColors(getBackgroundColor(), getGraphWidget().getBackground()));
 		figure.setAlpha(63);
 	}
 	

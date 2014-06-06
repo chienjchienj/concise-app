@@ -27,9 +27,9 @@ import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.resources.CABundle;
-import org.sustudio.concise.app.utils.CAFileUtils;
 import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.corpus.importer.AnalyzerEnum;
+import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
 
 public class CADlgPrefFile extends Composite {
 	
@@ -164,7 +164,7 @@ public class CADlgPrefFile extends Composite {
 			// copy dictionary files to concise workspace
 			File file = new File(f);
 			File targetFile = new File(Concise.getCurrentWorkspace().getDictionaryDir(), file.getName());
-			targetFile = CAFileUtils.getUniqueFile(targetFile);
+			targetFile = ConciseFileUtils.getUniqueFile(targetFile);
 			try {
 				FileUtils.copyFile(file, targetFile, true);
 			} catch (IOException e) {

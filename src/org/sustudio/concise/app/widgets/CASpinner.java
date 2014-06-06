@@ -21,21 +21,21 @@ public class CASpinner extends Shell {
 	protected int height = 206;
 	protected int radius = 20;
 	
-	protected final GearController gearView;
+	protected final GearController controller;
 	protected CLabel lblMsg;
 	
-	public CASpinner(GearController gearView) {
-		super(gearView.getShell(), SWT.NO_TRIM | SWT.ON_TOP);
-		this.gearView = gearView;
+	public CASpinner(GearController controller) {
+		super(controller.getShell(), SWT.NO_TRIM | SWT.ON_TOP);
+		this.controller = controller;
 		
 		createContents();
 		layout();
 	}
 	
 	protected void setLocation() {
-		final Control control = gearView.getControl();
+		final Control control = controller.getControl();
 		setLocation(control.toDisplay(0, 0).x + control.getSize().x / 2 - getSize().x / 2,
-				 	gearView.toDisplay(0, 0).y + gearView.getClientArea().height / 3 - getSize().y / 2);
+				 	controller.toDisplay(0, 0).y + controller.getClientArea().height / 3 - getSize().y / 2);
 	}
 	
 	protected void createContents() {
@@ -53,9 +53,9 @@ public class CASpinner extends Shell {
 				CASpinner.this.setLocation();
 			}
 		};
-		gearView.addListener(SWT.Show, locationListener);
-		gearView.addListener(SWT.Resize, locationListener);
-		gearView.addListener(SWT.Move, locationListener);
+		controller.addListener(SWT.Show, locationListener);
+		controller.addListener(SWT.Resize, locationListener);
+		controller.addListener(SWT.Move, locationListener);
 		
 		final CAProgressIndicator spinner = new CAProgressIndicator(this, SWT.NONE);
 		spinner.setBounds(
@@ -83,9 +83,9 @@ public class CASpinner extends Shell {
 			@Override
 			public void widgetDisposed(DisposeEvent event) {
 				spinner.stopAnimation();
-				CASpinner.this.gearView.removeListener(SWT.Show, locationListener);
-				CASpinner.this.gearView.removeListener(SWT.Resize, locationListener);
-				CASpinner.this.gearView.removeListener(SWT.Move, locationListener);
+				CASpinner.this.controller.removeListener(SWT.Show, locationListener);
+				CASpinner.this.controller.removeListener(SWT.Resize, locationListener);
+				CASpinner.this.controller.removeListener(SWT.Move, locationListener);
 			}
 			
 		});
@@ -102,7 +102,7 @@ public class CASpinner extends Shell {
 	}
 	
 	public void open() {
-		gearView.getBox().getBoxView(Concise.getCurrentWorkspace()).setEnabled(false);
+		controller.getBox().getBoxView(Concise.getCurrentWorkspace()).setEnabled(false);
 		super.open();
 	}
 	
@@ -121,7 +121,7 @@ public class CASpinner extends Shell {
 				if (alpha <= 0) {
 					CASpinner.this.setAlpha(0);
 					CASpinner.this.dispose();
-					gearView.getBox().getBoxView(Concise.getCurrentWorkspace()).setEnabled(true);
+					controller.getBox().getBoxView(Concise.getCurrentWorkspace()).setEnabled(true);
 					return;
 				}
 

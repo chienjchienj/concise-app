@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.lucene.document.Document;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.mihalis.opal.infinitePanel.InfiniteProgressPanel;
@@ -18,7 +17,6 @@ import org.sustudio.concise.app.thread.CAImportWorkspaceThread;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
-import org.sustudio.concise.core.corpus.importer.ConciseField;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Combo;
@@ -42,7 +40,7 @@ public class ImportWorkspaceDialog extends Shell {
 	}
 	
 	private class Doc {
-		Document doc;
+		ConciseDocument doc;
 		boolean checked = false;
 	}
 	
@@ -117,7 +115,7 @@ public class ImportWorkspaceDialog extends Shell {
 			public void handleEvent(Event event) {
 				TableItem item = (TableItem) event.item;
 				int index = event.index;
-				item.setText(new File(documents.get(index).doc.get(ConciseField.FILEPATH.field())).getName());
+				item.setText(documents.get(index).doc.filename);
 				item.setChecked(documents.get(index).checked);
 			}
 		});
@@ -155,13 +153,13 @@ public class ImportWorkspaceDialog extends Shell {
 				try {
 					Workspace w = getWorkspace(combo.getText().trim());
 					if (w != null) {
-						ArrayList<Document> docs = new ArrayList<Document>();
+						ArrayList<ConciseDocument> docs = new ArrayList<ConciseDocument>();
 						for (Doc d : documents) {
 							if (d.checked) {
 								docs.add(d.doc);
 							}
 						}
-						CAImportWorkspaceThread thread = new CAImportWorkspaceThread(w, docs.toArray(new Document[0]));
+						CAImportWorkspaceThread thread = new CAImportWorkspaceThread(w, docs.toArray(new ConciseDocument[0]));
 						thread.start();
 						
 						close();
@@ -214,9 +212,9 @@ public class ImportWorkspaceDialog extends Shell {
 				try {
 					Workspace w = getWorkspace(workpath);
 					if (w != null) {
-						for (ConciseDocument cd : new DocumentIterator(w.getIndexReader())) {
+						for (ConciseDocument cd : new DocumentIterator(w, w.getIndexReader())) {
 							Doc d = new Doc();
-							d.doc = w.getIndexReader().document(cd.docID);
+							d.doc = cd;
 							documents.add(d);
 						}
 						w.close();

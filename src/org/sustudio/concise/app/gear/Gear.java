@@ -52,7 +52,8 @@ public enum Gear {
 	/** Gear for Concordance Plotter */
 	ConcordancePlotter(
 			"Concordance Plotter",
-			"/org/sustudio/concise/app/icon/77-ekg.png"),
+			"/org/sustudio/concise/app/icon/circle-stack.png"),
+			//"/org/sustudio/concise/app/icon/77-ekg.png"),
 	
 	/** Gear for Keyword Lister */
 	KeywordLister(
@@ -68,6 +69,16 @@ public enum Gear {
 	CollocationalNetworker(
 			"Collocational Networker",
 			"/org/sustudio/concise/app/icon/55-network.png"),
+			
+	/** Gear for Word Trender */
+	WordTrender(
+			"Word Trender",
+			"/org/sustudio/concise/app/icon/77-ekg.png"),
+			
+	/** Gear for Scatter Plotter */
+	ScatterPlotter(
+			"Scatter Plotter",
+			"/org/sustudio/concise/app/icon/scatter.png"),
 	
 	/** Gear for File Viewer */
 	DocumentViewer(
@@ -133,6 +144,8 @@ public enum Gear {
 			case WordClouder:				controller = new WordClouder();				break;
 			case WordCluster:				controller = new WordCluster();				break;
 			case WordLister:				controller = new WordLister();				break;
+			case WordTrender:				controller = new WordTrender();				break;
+			case ScatterPlotter:			controller = new ScatterPlotter();			break;
 			default:	break;
 			}
 			

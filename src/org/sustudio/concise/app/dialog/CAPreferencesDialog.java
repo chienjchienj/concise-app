@@ -84,7 +84,7 @@ public class CAPreferencesDialog extends Shell {
 					CAPrefsUtils.writePrefs();
 				} catch (Exception e) {
 					Concise.getCurrentWorkspace().logError(null, e);
-					Dialog.error(getShell(), CABundle.get("error.writingPreferencesError"), e.toString());
+					Dialog.showException(e);
 				}
 				
 				
@@ -92,7 +92,7 @@ public class CAPreferencesDialog extends Shell {
 				{
 					if (getShell().getData("ReTokenize") != null && (Boolean) getShell().getData("ReTokenize")) 
 					{
-						if (Dialog.isConfirmed("Analyzer or Dictionary has been changed!", "Do you want to re-tokenize documents now?")) 
+						if (Dialog.isConfirmed(getShell(), "Analyzer or Dictionary has been changed!", "Do you want to re-tokenize documents now?")) 
 						{	
 							CAThread thread = new CAReTokenizeThread();
 							thread.start();
@@ -101,7 +101,7 @@ public class CAPreferencesDialog extends Shell {
 					
 					if (getShell().getData("TokenChange") != null && (Boolean) getShell().getData("TokenChange"))
 					{
-						Dialog.inform("Token changed!", "Re-calculating word frequency is required.");
+						Dialog.inform(getShell(), "Token changed!", "Re-calculating word frequency is required.");
 					}
 				}
 			}

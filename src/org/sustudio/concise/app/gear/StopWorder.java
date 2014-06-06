@@ -33,25 +33,25 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.mihalis.opal.opalDialog.Dialog;
 import org.mihalis.opal.promptSupport.PromptSupport;
+import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.CAOpenFilesDialog;
 import org.sustudio.concise.app.dialog.CASaveFileDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.CopyPasteHelper;
-import org.sustudio.concise.app.toolbar.TextAutoCompleterHelper;
 import org.sustudio.concise.app.utils.Formats;
+import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.wordlister.Word;
 
 public class StopWorder extends GearController {
 
-	private Text stopWord;
+	private CAAutoCompleteText stopWord;
 	private List wordsList;
 	
 	public StopWorder() {
@@ -68,7 +68,7 @@ public class StopWorder extends GearController {
 		lblAdd.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
 		lblAdd.setText("Add Stop:");
 		
-		stopWord = new Text(comp, SWT.SINGLE | SWT.BORDER);
+		stopWord = new CAAutoCompleteText(comp, SWT.SINGLE | SWT.BORDER);
 		stopWord.addSelectionListener(new SelectionAdapter() {
 			public void widgetDefaultSelected(SelectionEvent e) {
 				if (stopWord.getText().trim() != "") {
@@ -80,7 +80,12 @@ public class StopWorder extends GearController {
 		PromptSupport.setPrompt("add stop word", stopWord);
 		stopWord.setFocus();
 		CopyPasteHelper.listenTo(stopWord);
-		TextAutoCompleterHelper.listenTo(stopWord);
+		try {
+			stopWord.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+		} catch (IOException e) {
+			Concise.getCurrentWorkspace().logError(gear, e);
+			Dialog.showException(e);
+		}
 		
 		ToolBar toolBar = new ToolBar(comp, SWT.SMOOTH);
 		

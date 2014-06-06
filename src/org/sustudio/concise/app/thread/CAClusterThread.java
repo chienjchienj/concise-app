@@ -48,7 +48,7 @@ public class CAClusterThread extends CAThread {
 			int count = 0;
 			// insert into database
 			for (Cluster cluster : iterator) {
-				if (kill) break;
+				if (isInterrupted()) break;
 				
 				SQLiteDB.addCluster(ps, cluster);
 				count++;

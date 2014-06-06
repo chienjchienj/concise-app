@@ -19,7 +19,6 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.concordancePlotter.ConcPlotData;
-import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.core.cluster.Cluster;
 import org.sustudio.concise.core.collocation.Collocate;
 import org.sustudio.concise.core.concordance.ConcLine;
@@ -195,7 +194,9 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 			Files.createSymbolicLink(dbAlias.toPath(), temporaryDBFile.toPath());
 		}
 		if (temporaryDBFile.exists()) {
+			// TODO backup files
 			// create a backup db file
+			/*
 			backupThread = new Thread("Backup-thread") { 
 				public void run() {
 					while (!isInterrupted()) {
@@ -216,6 +217,11 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 			};
 			backupThread.setDaemon(true);
 			backupThread.start();
+			*/
+		}
+		if (temporaryDBFile.exists()) {
+			FileUtils.copyFile(temporaryDBFile, new File(getFile(), DB_FILENAME+"."+DB_EXTENSION+".bak"));
+			logInfo("Auto Backup");
 		}
 		String file = temporaryDBFile.getAbsolutePath();
 		

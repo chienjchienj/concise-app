@@ -335,7 +335,7 @@ public class ConcordancePlotter
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
 				
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILEPATH.field());
+				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
 				return new File(filepath).exists();
 				
 			} catch (Exception e) {
@@ -352,7 +352,7 @@ public class ConcordancePlotter
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
 				
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILEPATH.field());
+				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
 				if (new File(filepath).exists()) {
 					RevealInFinder.show(filepath);
 				}

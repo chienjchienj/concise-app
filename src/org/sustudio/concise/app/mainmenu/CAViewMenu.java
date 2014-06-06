@@ -35,8 +35,10 @@ public class CAViewMenu extends CAMenuItem {
 		addSeparator();
 		
 		addGear(Gear.ConcordancePlotter);
+		addGear(Gear.WordTrender);
 		addGear(Gear.WordClouder);
 		addGear(Gear.CollocationalNetworker);
+		addGear(Gear.ScatterPlotter);
 				
 		addSeparator();
 				

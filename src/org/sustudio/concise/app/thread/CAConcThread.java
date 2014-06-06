@@ -56,13 +56,13 @@ public class CAConcThread extends CAThread {
 			int lineCount = 0;
 			for (ScoreDoc scoreDoc :  conc.hitDocs()) 
 			{
-				if (isKilled()) {
+				if (isInterrupted()) {
 					break;
 				}
 				
 				for (ConcLine concLine : new ConcLineIterator(conc, scoreDoc)) 
 				{
-					if (isKilled()) {
+					if (isInterrupted()) {
 						break;
 					}
 					

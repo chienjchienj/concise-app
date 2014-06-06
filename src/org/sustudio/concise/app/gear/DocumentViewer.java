@@ -10,11 +10,13 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.eclipse.swt.SWT;
@@ -36,29 +38,28 @@ import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.mihalis.opal.opalDialog.Dialog;
-import org.mihalis.opal.promptSupport.PromptSupport;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.ZoomHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
-import org.sustudio.concise.app.toolbar.TextAutoCompleterHelper;
 import org.sustudio.concise.app.utils.RevealInFinder;
+import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.app.widgets.CANavigationButton;
 import org.sustudio.concise.app.widgets.CANavigationButton.NavigationEvent;
 import org.sustudio.concise.app.widgets.CANavigationButton.NavigationListener;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
-import org.sustudio.concise.core.collocation.ConciseTokenAnalyzer;
 import org.sustudio.concise.core.concordance.LineAndWhitespaceTokenizer;
 import org.sustudio.concise.core.concordance.PartOfSpeechFilter;
+import org.sustudio.concise.core.concordance.PartOfSpeechSeparatorFilter;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
-import org.sustudio.concise.core.corpus.importer.ContentField;
+import org.sustudio.concise.core.corpus.importer.ImportPOSAnalyzer;
 import org.sustudio.concise.core.highlighter.DocumentHighlighter;
 
 public class DocumentViewer 
@@ -67,7 +68,7 @@ public class DocumentViewer
 	
 	private StyledText styledText;
 	private Label lblMarker;
-	private Text txtSearch;
+	private CAAutoCompleteText txtSearch;
 	private Font titleFont;
 	
 	private IndexReader reader;
@@ -135,7 +136,12 @@ public class DocumentViewer
 	private Composite createSearchBlock() {
 		final Composite composite = new Composite(this, SWT.NONE);
 		composite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
-		composite.setLayout(new GridLayout(2, false));
+		GridLayout gl = new GridLayout(2, false);
+		gl.verticalSpacing = 0;
+		gl.marginWidth = 0;
+		gl.marginHeight = 0;
+		gl.horizontalSpacing = 5;
+		composite.setLayout(gl);
 		
 		final CANavigationButton btn = new CANavigationButton(composite);
 		btn.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 1, 1));
@@ -153,8 +159,7 @@ public class DocumentViewer
 			
 		});
 		
-		txtSearch = new Text(composite, SWT.SEARCH | SWT.ICON_SEARCH | SWT.BORDER | SWT.CANCEL);
-		PromptSupport.setPrompt("search", txtSearch);
+		txtSearch = new CAAutoCompleteText(composite, SWT.SEARCH | SWT.ICON_SEARCH | SWT.BORDER | SWT.CANCEL);
 		txtSearch.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 		txtSearch.setFont(SWTResourceManager.getFont("Lucida Grande", 11, SWT.NORMAL));
 		txtSearch.addSelectionListener(new SelectionAdapter() {
@@ -167,7 +172,7 @@ public class DocumentViewer
 					styledText.setStyleRange(null);
 					styledText.setStyleRange(range);
 					try {
-						File file = new File(reader.document(highlightDocId).get(ConciseField.FILEPATH.field()));
+						File file = new File(reader.document(highlightDocId).get(ConciseField.FILENAME.field()));
 						setStatusText(CAPrefs.SHOW_FULL_FILEPATH ? file.getPath() : file.getName());
 					} catch (IOException e) {
 						Concise.getCurrentWorkspace().logError(gear, e);
@@ -289,7 +294,6 @@ public class DocumentViewer
 	
 	
 	private void buildDocumentContent(final Document doc, final StringBuilder buffer) throws IOException {
-		
 		Analyzer analyzer = new Analyzer() {
 
 			@Override
@@ -298,6 +302,9 @@ public class DocumentViewer
 				
 				Tokenizer tokenizer = new LineAndWhitespaceTokenizer(Config.LUCENE_VERSION, reader);
 				TokenStream result = new PartOfSpeechFilter(tokenizer, CAPrefs.SHOW_PART_OF_SPEECH);
+				if (!CCPrefs.POS_SEPARATOR.equals(Config.SYSTEM_POS_SEPERATOR)) {
+					result = new PartOfSpeechSeparatorFilter(result);
+				}
 				return new TokenStreamComponents(tokenizer, result);
 			}
 			
@@ -324,23 +331,34 @@ public class DocumentViewer
 	 * @param content
 	 * @throws Exception
 	 */
-	private void makeDocumentIndexer(final String content) throws Exception {
-		
-		ConciseTokenAnalyzer analyzer = new ConciseTokenAnalyzer(Config.LUCENE_VERSION, CAPrefs.SHOW_PART_OF_SPEECH);
-		IndexWriterConfig config = new IndexWriterConfig(Config.LUCENE_VERSION, analyzer);
+	private void makeDocumentIndexer(Document doc) throws Exception {
+		if (tmpReader != null) {
+			AutoCompleter.removeInstanceFor(tmpReader);
+			tmpReader.close();
+			tmpDirectory.close();
+		}
 		
 		tmpDirectory = new RAMDirectory();
-		IndexWriter writer = new IndexWriter(tmpDirectory, config);
+		IndexWriter writer = new IndexWriter(tmpDirectory, 
+									new IndexWriterConfig(
+											Config.LUCENE_VERSION, 
+											new ImportPOSAnalyzer(Config.LUCENE_VERSION)));
 		
-		Document doc = new Document();
-		doc.add(new ContentField(ConciseField.CONTENT.field(), content, Store.NO));
 		writer.addDocument(doc);
 		writer.close();
 		
 		tmpReader = DirectoryReader.open(tmpDirectory);
 		
-		// auto completer
-		TextAutoCompleterHelper.listenTo(txtSearch, tmpReader);
+		// TODO 這段不知道在幹嘛，忘了
+		/*
+		Terms terms = MultiFields.getTerms(tmpReader, ConciseField.CONTENT.field());
+		if (terms != null) {
+			TermsEnum te = terms.iterator(null);
+			System.out.println(te.next().utf8ToString());
+		}
+		*/
+		// set IndexReader for auto completer
+		txtSearch.setIndexReader(tmpReader);
 	}
 	
 	private void openDocument(final int docID) {
@@ -355,7 +373,7 @@ public class DocumentViewer
 			Document doc = reader.document(docID);
 			
 			// auto completer support
-			makeDocumentIndexer(doc.get(ConciseField.CONTENT.field()));
+			makeDocumentIndexer(doc);
 			
 			final StringBuilder buffer = new StringBuilder();
 			buffer.append(doc.get(ConciseField.TITLE.field()));
@@ -375,7 +393,7 @@ public class DocumentViewer
 			styledText.setEditable(false);
 			buffer.setLength(0);
 			
-			final File file = new File(doc.get(ConciseField.FILEPATH.field()));
+			final File file = new File(doc.get(ConciseField.FILENAME.field()));
 			setStatusText(CAPrefs.SHOW_FULL_FILEPATH ? file.getPath() : file.getName());
 			
 		} catch (Exception e) {
@@ -446,7 +464,7 @@ public class DocumentViewer
 				Document doc = reader.document(docID);
 				 
 				// add auto-completer support
-				makeDocumentIndexer(doc.get(ConciseField.CONTENT.field()));
+				makeDocumentIndexer(doc);
 				
 				final StringBuilder buffer = new StringBuilder();
 				buffer.append(doc.get(ConciseField.TITLE.field()));
@@ -545,7 +563,7 @@ public class DocumentViewer
 	public boolean isRevealEnabled() {
 		try {
 			
-			final String filepath = reader.document(highlightDocId).get(ConciseField.FILEPATH.field());
+			final String filepath = reader.document(highlightDocId).get(ConciseField.FILENAME.field());
 			return new File(filepath).exists();
 			
 		} catch (Exception e) {
@@ -559,7 +577,7 @@ public class DocumentViewer
 	public void revealFileInFinder() {
 		try {
 			
-			final String filepath = reader.document(highlightDocId).get(ConciseField.FILEPATH.field());
+			final String filepath = reader.document(highlightDocId).get(ConciseField.FILENAME.field());
 			RevealInFinder.show(filepath);
 			
 		} catch (Exception e) {
@@ -574,7 +592,7 @@ public class DocumentViewer
 	public void openFileInDocumentViewer() {
 		try {
 			
-			final String filepath = reader.document(highlightDocId).get(ConciseField.FILEPATH.field());
+			final String filepath = reader.document(highlightDocId).get(ConciseField.FILENAME.field());
 			Program.launch(filepath);
 			
 		} catch (Exception e) {

@@ -1,11 +1,14 @@
 package org.sustudio.concise.app.gear.collocationalNetworker;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.draw2d.FigureUtilities;
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.RectangleFigure;
 import org.eclipse.draw2d.SWTGraphics;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphItem;
@@ -15,6 +18,8 @@ import org.eclipse.gef4.zest.core.widgets.LayoutFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
@@ -24,6 +29,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.wb.swt.SWTResourceManager;
 
 /**
@@ -37,8 +43,12 @@ public class NetworkGraph extends GraphWidget {
 	private Color labelColor = getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY);
 	private boolean hideNonSelectedLabel = true;
 	private boolean mouseDown = false;
+	private Point mouseDownPoint;
 	
 	private CAGraphNode hoveredNode = null;
+	
+	private final List<CAGraphNode> selections = new ArrayList<CAGraphNode>();
+	private RectangleFigure selectionArea;
 	
 	
 	/**
@@ -55,6 +65,16 @@ public class NetworkGraph extends GraphWidget {
 			}
 		});
 		
+		addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent event) {
+				switch (event.keyCode) {
+				case SWT.ESC:
+					selections.clear();
+					break;
+				}
+			}
+		});
+		
 		// hover listener
 		addMouseMoveListener(new MouseMoveListener() {
 			public void mouseMove(MouseEvent e) {
@@ -62,6 +82,33 @@ public class NetworkGraph extends GraphWidget {
 					NetworkGraph.this.setFocus();
 				}
 				hoveredNode = null;
+				
+				// selection area
+				if (selectionArea != null) {
+					unhighlightAllNodes();
+					unhighlightAllConnections();
+					fadeoutAllNodes();
+					Rectangle rect = selectionArea.getBounds();
+					rect.x = Math.min(e.x, mouseDownPoint.x);
+					rect.y = Math.min(e.y, mouseDownPoint.y);
+					rect.width = Math.abs(e.x - mouseDownPoint.x);
+					rect.height = Math.abs(e.y - mouseDownPoint.y);
+					selectionArea.setBounds(rect);
+					
+					for (GraphNode node : getNodes()) {
+						if (node.getFigure().getBounds().intersects(selectionArea.getBounds())) {
+							node.highlight();
+							if (hideNonSelectedLabel) {
+								((CAGraphNode) node).showLabel();
+							}
+						}
+					}
+					return;
+				}
+				
+				if (selections.size() > 0) {
+					return;	// hold selections
+				}
 				
 				IFigure figure = getZoomManager().getViewport().findFigureAt(e.x, e.y);
 				for (GraphNode node : getNodes()) {
@@ -96,20 +143,42 @@ public class NetworkGraph extends GraphWidget {
 		
 		// drag
 		addMouseListener(new MouseAdapter() {
-			public void mouseUp(MouseEvent e) {
-				mouseDown = false;
-			}
-
 			public void mouseDown(MouseEvent e) {
 				mouseDown = true;
+				mouseDownPoint = new Point(e.x, e.y);
+				if (hoveredNode == null) {
+					selectionArea = new RectangleFigure(); 
+					selectionArea.setLocation(new Point(e.x, e.y));
+					selectionArea.setSize(1, 1);
+					selectionArea.setBackgroundColor(DARK_BLUE);
+					selectionArea.setAlpha(64);
+					getRootLayer().add(selectionArea);
+				}
 			}
+			
+			public void mouseUp(MouseEvent e) {
+				mouseDown = false;
+				mouseDownPoint = null;
+				selections.clear();
+				if (selectionArea != null) {
+					for (GraphNode node : getNodes()) {
+						if (node.getFigure().getBounds().intersects(selectionArea.getBounds())) {
+							selections.add((CAGraphNode) node);							
+						}
+					}
+					select(selections);
+					
+					selectionArea.getParent().remove(selectionArea);
+					selectionArea = null;
+				}
+			}			
 		});
 		
 		addLayoutFilter(new LayoutFilter() {
 			public boolean isObjectFiltered(GraphItem item) {
 				// only GraphNode can be selected
 				if (item instanceof GraphNode) {
-					return item.getGraphModel().getSelection().contains(item)
+					return item.getGraphWidget().getSelection().contains(item)
 							&& mouseDown; // MouseDown;
 				}
 				return false;
@@ -149,25 +218,28 @@ public class NetworkGraph extends GraphWidget {
 	public void select(List<CAGraphNode> nodes) {
 		if (nodes != null) {
 			fadeoutAllNodes();
-			for (CAGraphNode node : nodes)
+			for (CAGraphNode node : nodes) {
 				node.unhighlight();
-				//node.highlight();
+				if (hideNonSelectedLabel) {
+					node.showLabel();
+				}
+			}
+			notifyListeners(SWT.Selection, new Event());
 		}
+	}
+	
+	public List<CAGraphNode> getSelectedNodes() {
+		return selections;
 	}
 	
 	/**
 	 * Un-highlight all nodes
 	 */
-	@SuppressWarnings("rawtypes")
 	public void unhighlightAllNodes() {
-		List nodes = getNodes();
-		for (Iterator iterator = nodes.iterator(); iterator.hasNext(); ) {
-			Object node = iterator.next();
-			if (node instanceof CAGraphNode) {
-				((CAGraphNode) node).unhighlight();
-				if (hideNonSelectedLabel) {
-					((CAGraphNode) node).showLabel();
-				}
+		for (GraphNode node : getNodes()) {
+			node.unhighlight();
+			if (node instanceof CAGraphNode && hideNonSelectedLabel) {
+				((CAGraphNode) node).showLabel();
 			}
 		}
 	}
@@ -175,17 +247,11 @@ public class NetworkGraph extends GraphWidget {
 	/**
 	 * Un-highlight all connections.
 	 */
-	@SuppressWarnings("rawtypes")
 	public void unhighlightAllConnections() {
-		List connctions = getConnections();
-		for (Iterator iterator = connctions.iterator(); iterator.hasNext();) {
-			Object conn = iterator.next();
-			if (conn instanceof GraphConnection) {
-				GraphConnection connection = (GraphConnection) conn;
-				connection.unhighlight();
-				
-				setLineAlpha(connection, 0.4);
-			}
+		for (GraphConnection conn : getConnections()) {
+			GraphConnection connection = (GraphConnection) conn;
+			connection.unhighlight();
+			setLineAlpha(connection, 0.4);
 		}
 	}
 	
@@ -367,5 +433,6 @@ public class NetworkGraph extends GraphWidget {
 	
 	public void dispose() {
 		labelColor.dispose();
+		super.dispose();
 	}
 }

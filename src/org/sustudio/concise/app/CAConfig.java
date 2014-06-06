@@ -16,7 +16,7 @@ public class CAConfig {
 	public static final String APP_NAME = "Concise";
 	
 	/** Application version - current version */
-	public static final String APP_VERSION = "0.3.6";
+	public static final String APP_VERSION = "0.3.7";
 	
 	
 	/** Workspace Extension (conciseworkspace) */
