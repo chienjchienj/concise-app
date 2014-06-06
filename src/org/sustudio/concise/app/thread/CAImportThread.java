@@ -5,12 +5,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.SQLiteDB;
@@ -24,7 +19,6 @@ import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
 import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
-import org.sustudio.concise.core.corpus.importer.ConciseField;
 import org.sustudio.concise.core.corpus.importer.Importer;
 
 public class CAImportThread extends ConciseThread {
@@ -56,20 +50,10 @@ public class CAImportThread extends ConciseThread {
 			// using MD5 to check 
 			ArrayList<String> existingMD5s = new ArrayList<String>();
 			try {
-				Directory directory = FSDirectory.open(indexDir);
-				IndexReader reader = DirectoryReader.open(directory);
-				for (int i=0; i<reader.maxDoc(); i++) {
-					Document document = reader.document(i);
-					if (document == null) continue;	// deleted document
-					
-					// TODO ConciseField.FIELDPATH 應該存成 relative path (
-					File file = new File(document.get(ConciseField.FILENAME.field()));
-					String md5 = ConciseFileUtils.getMD5(file);
+				for (ConciseDocument cd : new DocumentIterator(workspace, manipulation.indexReader())) {
+					String md5 = ConciseFileUtils.getMD5(cd.documentFile);
 					existingMD5s.add(md5);
 				}
-				reader.close();
-				directory.close();
-				
 			} catch (IndexNotFoundException idxNotFoundException) {
 				// empty index folder,
 				// do nothing
