@@ -1,11 +1,16 @@
 package org.sustudio.concise.app.helper;
 
+import javafx.embed.swt.FXCanvas;
+import javafx.embed.swt.SWTFXUtils;
+import javafx.scene.image.WritableImage;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.List;
@@ -93,7 +98,8 @@ public class CopyPasteHelper {
 			!(control instanceof Table) &&
 			!(control instanceof Tree) &&
 			!(control instanceof List) &&
-			!(control instanceof StyledText)) {
+			!(control instanceof StyledText) &&
+			!(control instanceof FXCanvas)) {
 			
 			return;
 		}
@@ -177,6 +183,10 @@ public class CopyPasteHelper {
 			selectAllEnabled = styledText.getText().length() > 0;
 		}
 		
+		else if (activeControl instanceof FXCanvas) {
+			copyEnabled = true;
+		}
+		
 		if (cutItem != null)
 			cutItem.setEnabled(cutEnabled);
 		if (copyItem != null)
@@ -199,6 +209,11 @@ public class CopyPasteHelper {
 		}
 		else if (activeControl instanceof StyledText) {
 			((StyledText) activeControl).copy();
+		}
+		else if (activeControl instanceof FXCanvas) {
+			WritableImage writableImage = ((FXCanvas) activeControl).getScene().snapshot(null);
+			ImageData imageData = SWTFXUtils.fromFXImage(writableImage, null);
+			ClipboardHelper.copyImageToClipboard(imageData);
 		}
 		else {
 			ClipboardHelper.copyItemTextToClipboard(activeControl);

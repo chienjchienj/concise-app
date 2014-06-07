@@ -16,15 +16,15 @@ import org.sustudio.concise.app.resources.CABundle;
 
 public class PopupMenuHelper {
 	
-	public static void addPopupMenuFor(final GearController gearView) {
-		final Control control = gearView.getControl();
+	public static void addPopupMenuFor(final GearController gearController) {
+		final Control control = gearController.getControl();
 		
 		Menu menu = new Menu(control);
 		control.setMenu(menu);
 		
-		addConcordItemFor(gearView);
-		addCollocItemFor(gearView);
-		addRevealInFinderItemFor(gearView);
+		addConcordItemFor(gearController);
+		addCollocItemFor(gearController);
+		addRevealInFinderItemFor(gearController);
 		
 		// add copy and select all
 		
@@ -38,15 +38,15 @@ public class PopupMenuHelper {
 		
 		new MenuItem(menu, SWT.SEPARATOR);
 		
-		MenuItem zoomFitItem = new MenuItem(menu, SWT.NONE);
+		final MenuItem zoomFitItem = new MenuItem(menu, SWT.NONE);
 		zoomFitItem.addSelectionListener(ZoomHelper.zoomDefaultListener);
 		zoomFitItem.setText(CABundle.get("menu.zoomFit"));
 		
-		MenuItem zoomInItem = new MenuItem(menu, SWT.NONE);
+		final MenuItem zoomInItem = new MenuItem(menu, SWT.NONE);
 		zoomInItem.addSelectionListener(ZoomHelper.zoomInListener);
 		zoomInItem.setText(CABundle.get("menu.zoomIn"));
 		
-		MenuItem zoomOutItem = new MenuItem(menu, SWT.NONE);
+		final MenuItem zoomOutItem = new MenuItem(menu, SWT.NONE);
 		zoomOutItem.addSelectionListener(ZoomHelper.zoomOutListener);
 		zoomOutItem.setText(CABundle.get("menu.zoomOut"));
 		
@@ -66,6 +66,12 @@ public class PopupMenuHelper {
 				CopyPasteHelper.setPopupCopyMenuItem(copyItem);
 				CopyPasteHelper.setPopupSelectAllMenuItem(selectAllItem);
 				SaveOutputHelper.setPopupMenuItem(saveOutputItem);
+				
+				if (gearController.getZoomableControls() == null) {
+					zoomFitItem.setEnabled(false);
+					zoomInItem.setEnabled(false);
+					zoomOutItem.setEnabled(false);
+				}
 			}
 			
 		});

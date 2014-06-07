@@ -139,6 +139,10 @@ public class WordTrender extends GearController {
 		return fxCanvas;
 	}
 	
+	public Control[] getZoomableControls() {
+		return null;
+	}
+	
 	public void loadData() {
 		CASpinner spinner = new CASpinner(this);
 		spinner.open();
@@ -156,6 +160,7 @@ public class WordTrender extends GearController {
 				});
 			}
 			
+			SQLiteDB.createTableIfNotExists(CATable.WordTrender);
 			// add existing words
 			String sql = "SELECT * FROM " + CATable.WordTrender.name();
 			ResultSet rs = SQLiteDB.executeQuery(sql);

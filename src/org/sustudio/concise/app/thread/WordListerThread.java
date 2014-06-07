@@ -17,7 +17,7 @@ import org.sustudio.concise.core.wordlister.WordIterator;
 public class WordListerThread extends ConciseThread {
 
 	public WordListerThread(CAQuery query) {
-		super(Gear.WordLister, query);
+		super(query.getGear(), query);
 	}
 	
 	public void running() {

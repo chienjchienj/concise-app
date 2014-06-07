@@ -39,6 +39,9 @@ import org.sustudio.concise.app.gear.IGearFilterable;
 import org.sustudio.concise.app.gear.IGearSortable;
 import org.sustudio.concise.app.gear.IGearTableBased;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.app.thread.ConciseThread;
+import org.sustudio.concise.app.thread.PlotterThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.utils.RevealInFinder;
 import org.sustudio.concise.app.widgets.CASpinner;
@@ -385,6 +388,12 @@ public class ConcordancePlotter
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new PlotterThread(query);
+		thread.start();
 	}
 
 }

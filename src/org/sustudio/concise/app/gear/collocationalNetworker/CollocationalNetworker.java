@@ -48,14 +48,13 @@ import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.gear.IGearCollocatable;
 import org.sustudio.concise.app.gear.IGearConcordable;
 import org.sustudio.concise.app.helper.CopyPasteHelper;
-import org.sustudio.concise.app.helper.ZoomHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.query.DefaultCollocQuery;
 import org.sustudio.concise.app.query.DefaultConcQuery;
 import org.sustudio.concise.app.thread.CollocationalNetworkThread;
-import org.sustudio.concise.app.toolbar.CASearchAction;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.app.widgets.CASpinner;
@@ -199,11 +198,6 @@ public class CollocationalNetworker
 	}
 	
 	@Override
-	protected void setZoomableControls() {
-		ZoomHelper.addControls(new Control[] { networkGraph });
-	}
-	
-	@Override
 	public Control[] getZoomableControls() {
 		return new Control[] { networkGraph };
 	}
@@ -295,8 +289,8 @@ public class CollocationalNetworker
 	public void showConcord() {
 		if (networkGraph.getHoveredNode() != null) {
 			String word = networkGraph.getHoveredNode().getText();
-			Gear.Concordancer.open(workspace);
-			CASearchAction.doIt(new DefaultConcQuery(word));
+			Gear.Concordancer.open(workspace)
+				.doit(new DefaultConcQuery(word));
 		}
 	}
 
@@ -309,8 +303,8 @@ public class CollocationalNetworker
 	public void showCollocate() {
 		if (networkGraph.getHoveredNode() != null) {
 			String word = networkGraph.getHoveredNode().getText();
-			Gear.Collocator.open(workspace);
-			CASearchAction.doIt(new DefaultCollocQuery(word));
+			Gear.Collocator.open(workspace)
+				.doit(new DefaultCollocQuery(word));
 		}
 	}
 	
@@ -517,6 +511,12 @@ public class CollocationalNetworker
 				conn.setData("collocate", coll);
 			}
 		}
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new CollocationalNetworkThread(query);
+		thread.start();
 	}
 
 	

@@ -8,17 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.eclipse.gef4.cloudio.IEditableCloudLabelProvider;
-import org.eclipse.gef4.cloudio.TagCloud;
-import org.eclipse.gef4.cloudio.TagCloudViewer;
-import org.eclipse.jface.viewers.BaseLabelProvider;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.GestureEvent;
+import org.eclipse.swt.events.GestureListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -37,14 +35,17 @@ import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
-import org.sustudio.concise.app.helper.ZoomHelper;
+import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.app.thread.ConciseThread;
+import org.sustudio.concise.app.thread.WordListerThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.wordlister.Word;
 
 public class WordClouder extends GearController {
 
-	private TagCloudViewer viewer;
+	private WordCloud wordCloud;
 	private CloudLabelProvider labelProvider;
 	
 	public WordClouder() {
@@ -71,43 +72,50 @@ public class WordClouder extends GearController {
 		cloudComp.setLayout(new GridLayout());
 		cloudComp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
-		TagCloud wordCloud = new TagCloud(cloudComp, SWT.HORIZONTAL | SWT.VERTICAL | SWT.BORDER);
+		wordCloud = new WordCloud(cloudComp, SWT.HORIZONTAL | SWT.VERTICAL | SWT.BORDER);
 		wordCloud.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		// scrolling empty TagCloud will crash (some listener bugs)...
 		// so, we just disable it.
 		// this will be re-enabled after calling resetCloud(List<WordStats>).
-		wordCloud.setEnabled(false);
-		
-		labelProvider = new CloudLabelProvider();
-		// TODO 改寫 TagCloudViewer，不要 jface 的 viewer
-		viewer = new TagCloudViewer(wordCloud);
-		viewer.setLabelProvider(labelProvider);
-		viewer.setContentProvider(new IStructuredContentProvider() {
-			public void dispose() {	}
-			
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-				List<?> list = (List<?>) newInput;
-				if (list == null || list.size() == 0) return;
-				labelProvider.setMaxOccurrences( ((Word) list.get(0) ).totalTermFreq);
-				int minIndex = Math.min(list.size() - 1, ((TagCloudViewer) viewer).getMaxWords());
-				labelProvider.setMinOccurrences( ((Word) list.get(minIndex) ).totalTermFreq);
-				labelProvider.setMaxWords(((TagCloudViewer) viewer).getMaxWords());
-				labelProvider.setInput(newInput);
+		//wordCloud.setEnabled(false);
+		wordCloud.addMouseTrackListener(new MouseTrackAdapter() {
+			@Override
+			public void mouseExit(MouseEvent e) {
+				wordCloud.setToolTipText(null);
 			}
 			
-			public Object[] getElements(Object inputElement) {
-				return ((List<?>)inputElement).toArray();
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				CloudWord word = (CloudWord) e.data;
+				wordCloud.setToolTipText(labelProvider.getToolTip(word.data));
+			}
+		});
+		wordCloud.addGestureListener(new GestureListener() {
+			@Override
+			public void gesture(GestureEvent event) {
+				if (event.detail == SWT.GESTURE_MAGNIFY) {
+					if (event.magnification > 1) {
+						wordCloud.zoomIn();
+					}
+					else if (event.magnification < 1) {
+						wordCloud.zoomOut();
+					}
+				}
 			}
 			
 		});
-		viewer.getCloud().addControlListener(new ControlAdapter() {
+		
+		
+		labelProvider = new CloudLabelProvider();
+		
+		wordCloud.addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
-				viewer.getCloud().zoomFit();
+				wordCloud.zoomFit();
 			}
 		});
 		
 		final ScrolledComposite sc = new ScrolledComposite(sash, SWT.V_SCROLL | SWT.H_SCROLL);
-		final CloudOptionsComposite options = new CloudOptionsComposite(sc, SWT.NONE, viewer);
+		final CloudOptionsComposite options = new CloudOptionsComposite(sc, SWT.NONE, this);
 		sc.setContent(options);
 		sc.setExpandHorizontal(true);
 		sc.setExpandVertical(true);
@@ -123,15 +131,11 @@ public class WordClouder extends GearController {
 	}
 	
 	public Control getControl() {
-		return viewer.getCloud();
-	}
-	
-	protected void setZoomableControls() {
-		ZoomHelper.addControls(new Control[] { viewer.getCloud() });
+		return wordCloud;
 	}
 	
 	public Control[] getZoomableControls() {
-		return new Control[] { viewer.getCloud() };
+		return new Control[] { wordCloud };
 	}
 	
 	public void setCloudData() {
@@ -166,14 +170,72 @@ public class WordClouder extends GearController {
 	private void resetCloud(List<Word> data) {
 		CASpinner spinner = new CASpinner(this);
 		spinner.open();
-		viewer.setInput(data);
-		viewer.getCloud().setEnabled(true);
-		setStatusText("Showing top " + Formats.getNumberFormat(viewer.getMaxWords()) + " words.");
+		// TODO rewrite
+		setInput(data);
+		wordCloud.setEnabled(true);
+		setStatusText("Showing top " + Formats.getNumberFormat(CAPrefs.CLOUDER_MAX_WORDS) + " words.");
 		spinner.close();
 	}
 	
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new WordListerThread(query);
+		thread.start();
+	}
 	
-	public class CloudLabelProvider extends BaseLabelProvider implements IEditableCloudLabelProvider {
+	private List<Word> input;
+	
+	public void setInput(List<Word> data) {
+		input = data;
+		labelProvider.setMaxOccurrences( (data.get(0) ).totalTermFreq);
+		int minIndex = Math.min(data.size() - 1, CAPrefs.CLOUDER_MAX_WORDS);
+		labelProvider.setMinOccurrences( (data.get(minIndex) ).totalTermFreq);
+		labelProvider.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
+		labelProvider.setInput(data);
+		
+		List<CloudWord> words = new ArrayList<CloudWord>();
+		short i = 0;
+		for (Word element : data) {
+			CloudWord word = new CloudWord(labelProvider.getLabel(element));
+			word.setColor(labelProvider.getColor(element));
+			word.weight = labelProvider.getWeight(element);
+			word.setFontData(labelProvider.getFontData(element));
+			word.angle = labelProvider.getAngle(element);
+			word.data = element;
+			words.add(word);
+			i++;
+			word.id = i;
+			if(i == CAPrefs.CLOUDER_MAX_WORDS) break;
+		}
+		wordCloud.setWords(words);
+	}
+	
+	/**
+	 * Resets the {@link WordCloud}. If <code>recalc</code> is
+	 * <code>true</code>, the displayed elements will be updated
+	 * with the values provided by used {@link ICloudLabelProvider}.
+	 * Otherwise, the cloud will only be re-layouted, keeping fonts,
+	 * colors and angles untouched.
+	 * @param recalc
+	 */
+	public void reset(boolean recalc) {
+		wordCloud.layoutCloud(recalc);
+	}
+	
+	public List<Word> getInput() {
+		return input;
+	}
+	
+	public WordCloud getCloud() {
+		return wordCloud;
+	}
+	
+	public CloudLabelProvider getLabelProvider() {
+		return labelProvider;
+	}
+	
+	
+	public class CloudLabelProvider {
 
 		private double maxOccurrences;
 		private double minOccurrences;
@@ -195,19 +257,16 @@ public class WordClouder extends GearController {
 			angles.add(0F);
 		}
 
-		@Override
 		public String getLabel(Object element) {
 			return ((Word)element).word;
 		}
 		
-		@Override
 		public double getWeight(Object element) {
 			double count  = Math.log(((Word)element).totalTermFreq - minOccurrences+1);
 			count /= (Math.log(maxOccurrences));
 			return count;
 		}
 
-		@Override
 		public Color getColor(Object element) {
 			Color color = colors.get(element);
 			if(color == null) {
@@ -240,7 +299,6 @@ public class WordClouder extends GearController {
 			this.minOccurrences = (double) occurrences;
 		}
 		
-		@Override
 		public void dispose() {
 			for (Color color : colorList) {
 				color.dispose();
@@ -254,7 +312,6 @@ public class WordClouder extends GearController {
 			this.angles = angles;
 		}
 
-		@Override
 		public float getAngle(Object element) {
 			float angle = angles.get(random.nextInt(angles.size()));
 			return angle;
@@ -290,7 +347,6 @@ public class WordClouder extends GearController {
 			}
 		}
 
-		@Override
 		public String getToolTip(Object element) {
 			Word ws = (Word) element;
 			return ws.word + " (" + Formats.getNumberFormat(ws.totalTermFreq) + ")";
@@ -313,4 +369,6 @@ public class WordClouder extends GearController {
 		}
 		
 	}
+	
+	
 }

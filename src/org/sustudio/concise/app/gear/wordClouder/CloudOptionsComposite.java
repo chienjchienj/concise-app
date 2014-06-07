@@ -12,12 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.gef4.cloudio.IEditableCloudLabelProvider;
-import org.eclipse.gef4.cloudio.TagCloudViewer;
-import org.eclipse.gef4.cloudio.Word;
 import org.eclipse.gef4.cloudio.layout.DefaultLayouter;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,6 +38,7 @@ import org.sustudio.concise.app.utils.LabelFont;
 import org.sustudio.concise.app.widgets.CAColorScheme;
 import org.sustudio.concise.app.widgets.CAColorScheme.ColorChangedEvent;
 import org.sustudio.concise.app.widgets.CAColorScheme.ColorChangedListener;
+import org.sustudio.concise.app.widgets.CASpinner;
 
 /**
  * Provides options to modify the rendering of a {@link TagCloudViewer} using an
@@ -53,31 +49,33 @@ import org.sustudio.concise.app.widgets.CAColorScheme.ColorChangedListener;
  */
 public class CloudOptionsComposite extends Composite {
 
-	private TagCloudViewer viewer;
+	//private TagCloudViewer viewer;
+	private final WordClouder clouder;
 	private List<FontData> fonts;
 	/**
 	 * Create the composite.
 	 * @param parent
 	 * @param style
 	 */
-	public CloudOptionsComposite(Composite parent, int style, TagCloudViewer viewer) {
+	public CloudOptionsComposite(Composite parent, int style, WordClouder clouder) {
 		super(parent, style);
-		Assert.isLegal(viewer.getLabelProvider() instanceof IEditableCloudLabelProvider, "Cloud label provider must be of type " + IEditableCloudLabelProvider.class);
-		this.viewer = viewer;
+		//Assert.isLegal(viewer.getLabelProvider() instanceof IEditableCloudLabelProvider, "Cloud label provider must be of type " + IEditableCloudLabelProvider.class);
+		//this.viewer = viewer;
+		this.clouder = clouder;
 		setLayout(new GridLayout());
 		setFont(LabelFont.getFont());
 		
-		viewer.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
-		viewer.getCloud().setMaxFontSize(CAPrefs.CLOUDER_MAX_FONT_SIZE);
-		viewer.getCloud().setMinFontSize(CAPrefs.CLOUDER_MIN_FONT_SIZE);
-		viewer.getCloud().setBoost(CAPrefs.CLOUDER_BOOST);
-		viewer.getCloud().setBoostFactor(CAPrefs.CLOUDER_BOOST_FACTOR);
-		((CloudLabelProvider) viewer.getLabelProvider()).setAngles(CAPrefs.CLOUDER_ANGLES.getAngles());
-		viewer.getLayouter().setOption(DefaultLayouter.X_AXIS_VARIATION, CAPrefs.CLOUDER_X_VARIATION);
-		viewer.getLayouter().setOption(DefaultLayouter.Y_AXIS_VARIATION, CAPrefs.CLOUDER_Y_VARIATION);
-		((CloudLabelProvider) viewer.getLabelProvider()).setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
+		//clouder.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
+		clouder.getCloud().setMaxFontSize(CAPrefs.CLOUDER_MAX_FONT_SIZE);
+		clouder.getCloud().setMinFontSize(CAPrefs.CLOUDER_MIN_FONT_SIZE);
+		clouder.getCloud().setBoost(CAPrefs.CLOUDER_BOOST);
+		clouder.getCloud().setBoostFactor(CAPrefs.CLOUDER_BOOST_FACTOR);
+		((CloudLabelProvider) clouder.getLabelProvider()).setAngles(CAPrefs.CLOUDER_ANGLES.getAngles());
+		clouder.getCloud().getLayouter().setOption(DefaultLayouter.X_AXIS_VARIATION, CAPrefs.CLOUDER_X_VARIATION);
+		clouder.getCloud().getLayouter().setOption(DefaultLayouter.Y_AXIS_VARIATION, CAPrefs.CLOUDER_Y_VARIATION);
+		((CloudLabelProvider) clouder.getLabelProvider()).setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
 		getFonts();
-		((CloudLabelProvider) viewer.getLabelProvider()).setFonts(fonts);
+		((CloudLabelProvider) clouder.getLabelProvider()).setFonts(fonts);
 				
 		addLayoutButtons();
 		addColorButtons();
@@ -118,7 +116,7 @@ public class CloudOptionsComposite extends Composite {
 		words.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_MAX_WORDS = Integer.parseInt(words.getItem(words.getSelectionIndex()));
-				viewer.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
+				//clouder.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
 			}
 		});
 		words.setFont(getFont());
@@ -133,7 +131,7 @@ public class CloudOptionsComposite extends Composite {
 		font.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_MAX_FONT_SIZE = Integer.parseInt(font.getItem(font.getSelectionIndex()));
-				viewer.getCloud().setMaxFontSize(CAPrefs.CLOUDER_MAX_FONT_SIZE);
+				clouder.getCloud().setMaxFontSize(CAPrefs.CLOUDER_MAX_FONT_SIZE);
 			}
 		});
 		font.setFont(getFont());
@@ -148,7 +146,7 @@ public class CloudOptionsComposite extends Composite {
 		minFont.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_MIN_FONT_SIZE = Integer.parseInt(minFont.getItem(minFont.getSelectionIndex()));
-				viewer.getCloud().setMinFontSize(CAPrefs.CLOUDER_MIN_FONT_SIZE);
+				clouder.getCloud().setMinFontSize(CAPrefs.CLOUDER_MIN_FONT_SIZE);
 			}
 		});
 		minFont.setFont(getFont());
@@ -163,7 +161,7 @@ public class CloudOptionsComposite extends Composite {
 		boost.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_BOOST = Integer.parseInt(boost.getItem(boost.getSelectionIndex()));
-				viewer.setBoost(CAPrefs.CLOUDER_BOOST);
+				clouder.getCloud().setBoost(CAPrefs.CLOUDER_BOOST);
 			}
 		});
 		boost.setFont(getFont());
@@ -178,7 +176,7 @@ public class CloudOptionsComposite extends Composite {
 		boostFactor.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_BOOST_FACTOR = Float.parseFloat(boostFactor.getItem(boostFactor.getSelectionIndex()));
-				viewer.setBoostFactor(CAPrefs.CLOUDER_BOOST_FACTOR);
+				clouder.getCloud().setBoostFactor(CAPrefs.CLOUDER_BOOST_FACTOR);
 			}
 		});
 		boostFactor.setFont(getFont());
@@ -195,7 +193,7 @@ public class CloudOptionsComposite extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				int index = angles.getSelectionIndex();
 				CAPrefs.CLOUDER_ANGLES = CloudAngle.values()[index];
-				IEditableCloudLabelProvider lp = (IEditableCloudLabelProvider) viewer.getLabelProvider();
+				CloudLabelProvider lp = clouder.getLabelProvider();
 				lp.setAngles(CAPrefs.CLOUDER_ANGLES.getAngles());
 			}
 		});
@@ -211,7 +209,7 @@ public class CloudOptionsComposite extends Composite {
 		xAxis.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_X_VARIATION = Integer.parseInt(xAxis.getItem(xAxis.getSelectionIndex()));
-				viewer.getLayouter().setOption(DefaultLayouter.X_AXIS_VARIATION, CAPrefs.CLOUDER_X_VARIATION);
+				clouder.getCloud().getLayouter().setOption(DefaultLayouter.X_AXIS_VARIATION, CAPrefs.CLOUDER_X_VARIATION);
 			}
 		});
 		xAxis.setFont(getFont());
@@ -226,7 +224,7 @@ public class CloudOptionsComposite extends Composite {
 		yAxis.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				CAPrefs.CLOUDER_Y_VARIATION = Integer.parseInt(yAxis.getItem(yAxis.getSelectionIndex())); 
-				viewer.getLayouter().setOption(DefaultLayouter.Y_AXIS_VARIATION, CAPrefs.CLOUDER_Y_VARIATION);
+				clouder.getCloud().getLayouter().setOption(DefaultLayouter.Y_AXIS_VARIATION, CAPrefs.CLOUDER_Y_VARIATION);
 			}
 		});
 		yAxis.setFont(getFont());
@@ -236,12 +234,11 @@ public class CloudOptionsComposite extends Composite {
 		run.setText("Re-Position");
 		run.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				final ProgressMonitorDialog dialog = new ProgressMonitorDialog(viewer.getControl().getShell());
-				dialog.setBlockOnOpen(false);
-				dialog.open();
-				dialog.getProgressMonitor().beginTask("Layouting tag cloud...", 100);
-				viewer.reset(dialog.getProgressMonitor(),false);
-				dialog.close();
+				CASpinner spinner = new CASpinner(clouder);
+				spinner.setMessage("Layouting word cloud...");
+				spinner.open();
+				clouder.reset(false);
+				spinner.close();
 			}
 		});
 		run.setFont(getFont());
@@ -252,13 +249,12 @@ public class CloudOptionsComposite extends Composite {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ProgressMonitorDialog dialog = new ProgressMonitorDialog(viewer.getControl().getShell());
-				dialog.setBlockOnOpen(false);
-				dialog.open();
-				dialog.getProgressMonitor().beginTask("Layouting tag cloud...", 200);
-				viewer.setInput(viewer.getInput(), dialog.getProgressMonitor());
-				viewer.reset(dialog.getProgressMonitor(),false);
-				dialog.close();
+				CASpinner spinner = new CASpinner(clouder);
+				spinner.setMessage("Layouting word cloud...");
+				spinner.open();
+				clouder.setInput(clouder.getInput());
+				clouder.reset(false);
+				spinner.close();
 			}
 			
 		});
@@ -280,14 +276,14 @@ public class CloudOptionsComposite extends Composite {
 			public void colorChanged(ColorChangedEvent event) {
 				
 				CAPrefs.CLOUDER_COLOR_SCHEME = event.getColorScheme();
-				if (viewer.getInput() == null) return;
-				CloudLabelProvider lp = (CloudLabelProvider) viewer.getLabelProvider();
+				if (clouder.getInput() == null) return;
+				CloudLabelProvider lp = (CloudLabelProvider) clouder.getLabelProvider();
 				lp.setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
-				List<Word> words = viewer.getCloud().getWords();
-				for (Word word : words) {
+				List<CloudWord> words = clouder.getCloud().getWords();
+				for (CloudWord word : words) {
 					word.setColor(lp.getColor(word.data));
 				}
-				viewer.getCloud().redrawTextLayerImage();
+				clouder.getCloud().redrawTextLayerImage();
 				
 			}
 			
@@ -301,7 +297,7 @@ public class CloudOptionsComposite extends Composite {
 		final Button bg = new Button(comp, SWT.FLAT);
 		bg.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		bg.setText("Background");
-		bg.setImage(ColorImage.createImage(viewer.getCloud().getBackground(), 16, 16));
+		bg.setImage(ColorImage.createImage(clouder.getCloud().getBackground(), 16, 16));
 		bg.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -309,11 +305,11 @@ public class CloudOptionsComposite extends Composite {
 				ColorDialog cd = new ColorDialog(getShell());
 				RGB color = cd.open();
 				if(color == null) return;
-				Color old = viewer.getCloud().getBackground();
+				Color old = clouder.getCloud().getBackground();
 				Color c = new Color(getDisplay(), color);
-				viewer.getCloud().setBackground(c);
+				clouder.getCloud().setBackground(c);
 				old.dispose();
-				viewer.getCloud().redrawTextLayerImage();
+				clouder.getCloud().redrawTextLayerImage();
 				Image oldImage = bg.getImage();
 				Image newImage = ColorImage.createImage(color, 16, 16);
 				bg.setImage(newImage);
@@ -327,7 +323,7 @@ public class CloudOptionsComposite extends Composite {
 		final Button sel = new Button(comp, SWT.FLAT);
 		sel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		sel.setText("Selection");
-		sel.setImage(ColorImage.createImage(viewer.getCloud().getSelectionColor(), 16, 16));
+		sel.setImage(ColorImage.createImage(clouder.getCloud().getSelectionColor(), 16, 16));
 		sel.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
@@ -335,11 +331,11 @@ public class CloudOptionsComposite extends Composite {
 				ColorDialog cd = new ColorDialog(getShell());
 				RGB color = cd.open();
 				if(color == null) return;
-				Color old = viewer.getCloud().getSelectionColor();
+				Color old = clouder.getCloud().getSelectionColor();
 				Color c = new Color(getDisplay(), color);
-				viewer.getCloud().setSelectionColor(c);
+				clouder.getCloud().setSelectionColor(c);
 				old.dispose();
-				viewer.getCloud().redrawTextLayerImage();
+				clouder.getCloud().redrawTextLayerImage();
 				Image oldImage = sel.getImage();
 				Image newImage = ColorImage.createImage(color, 16, 16);
 				sel.setImage(newImage);
@@ -363,17 +359,17 @@ public class CloudOptionsComposite extends Composite {
 			@Override public void fontChanged(FontChangedEvent event) {
 				fonts = Arrays.asList(event.getFontsData());
 				updateCloudFontsPreference();
-				if (viewer.getInput() == null) return;
-				CloudLabelProvider lp = (CloudLabelProvider) viewer.getLabelProvider();
+				if (clouder.getInput() == null) return;
+				CloudLabelProvider lp = (CloudLabelProvider) clouder.getLabelProvider();
 				lp.setFonts(fonts);
-				List<Word> words = viewer.getCloud().getWords();
-				for (Word word : words) {
+				List<CloudWord> words = clouder.getCloud().getWords();
+				for (CloudWord word : words) {
 					int height = word.getFontData()[0].getHeight();
 					FontData[] fdata = lp.getFontData(word.data);
 					fdata[0].setHeight(height);;
 					word.setFontData(fdata);
 				}
-				viewer.getCloud().redrawTextLayerImage();
+				clouder.getCloud().redrawTextLayerImage();
 			}
 			
 		});

@@ -26,8 +26,10 @@ import org.sustudio.concise.app.enums.EffectSizeMeasurement;
 import org.sustudio.concise.app.enums.SignificanceMeasurement;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.DefaultConcQuery;
-import org.sustudio.concise.app.toolbar.CASearchAction;
+import org.sustudio.concise.app.thread.CollocationThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.collocation.Collocate;
@@ -325,14 +327,20 @@ public class Collocator
 			if (word.contains(" ")) {
 				word = "\"" + word.trim() + "\"";	// add quotation mark to make phrase search
 			}
-			Gear.Concordancer.open(Concise.getCurrentWorkspace());
-			CASearchAction.doIt(new DefaultConcQuery(word));
+			Gear.Concordancer.open(Concise.getCurrentWorkspace())
+				.doit(new DefaultConcQuery(word));
 		}
 	}
 
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new CollocationThread(query);
+		thread.start();
 	}
 		
 }

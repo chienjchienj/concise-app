@@ -26,9 +26,11 @@ import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.DefaultCollocQuery;
 import org.sustudio.concise.app.query.DefaultConcQuery;
-import org.sustudio.concise.app.toolbar.CASearchAction;
+import org.sustudio.concise.app.thread.ConciseThread;
+import org.sustudio.concise.app.thread.WordListerThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.wordlister.Lemma;
@@ -380,8 +382,8 @@ public class WordLister
 			else {
 				sb.append(word.getWord());
 			}
-			Gear.Concordancer.open(workspace);
-			CASearchAction.doIt(new DefaultConcQuery(sb.toString()));
+			Gear.Concordancer.open(workspace)
+				.doit(new DefaultConcQuery(sb.toString()));
 			sb.setLength(0);
 		}
 	}
@@ -405,8 +407,8 @@ public class WordLister
 			else {
 				sb.append(word.getWord());
 			}
-			Gear.Collocator.open(workspace);
-			CASearchAction.doIt(new DefaultCollocQuery(sb.toString()));
+			Gear.Collocator.open(workspace)
+				.doit(new DefaultCollocQuery(sb.toString()));
 			sb.setLength(0);
 		}
 	}
@@ -414,6 +416,12 @@ public class WordLister
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new WordListerThread(query);
+		thread.start();
 	}
 	
 }

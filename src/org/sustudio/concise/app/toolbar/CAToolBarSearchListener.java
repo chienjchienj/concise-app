@@ -8,6 +8,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.Dialog;
+import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.core.concordance.Conc;
@@ -22,7 +23,8 @@ public class CAToolBarSearchListener extends SelectionAdapter {
 		// validating query first
 		CAQuery query = Concise.getActiveApp().toolBar.getQuery();
 		if (validQuery(query)) {
-			CASearchAction.doIt(query);
+			GearController controller = query.getGear().getController(Concise.getCurrentWorkspace());
+			controller.doit(query);
 		}
 	}
 	
@@ -37,6 +39,7 @@ public class CAToolBarSearchListener extends SelectionAdapter {
 		case CorpusManager:
 		case KeywordLister:
 		case ReferenceCorpusManager:
+		case WordClouder:
 		case WordLister:
 			return true;
 		

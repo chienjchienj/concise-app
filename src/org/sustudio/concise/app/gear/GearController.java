@@ -11,6 +11,7 @@ import org.sustudio.concise.app.helper.CopyPasteHelper;
 import org.sustudio.concise.app.helper.PopupMenuHelper;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.helper.ZoomHelper;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.utils.LabelFont;
 import org.sustudio.concise.app.widgets.CABoxView;
 import org.sustudio.concise.app.widgets.ToolBoxView;
@@ -65,6 +66,9 @@ public abstract class GearController extends Composite {
 		lblStatus.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 		lblStatus.setText(gear.label());
 		lblStatus.setFont(LabelFont.getFont());
+
+		// zoom
+		ZoomHelper.addControls(getZoomableControls());
 		
 		addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
@@ -73,8 +77,6 @@ public abstract class GearController extends Composite {
 				GearController.this.gear.setGearView(workspace, null);
 			}
 		});
-		
-		setZoomableControls();
 		
 		final Listener gearDataListener = new Listener() {
 			public void handleEvent(Event event) {
@@ -142,10 +144,6 @@ public abstract class GearController extends Composite {
 	protected void setCopyPasteHelper() {
 		CopyPasteHelper.listenTo(control);
 	}
-		
-	protected void setZoomableControls() {
-		ZoomHelper.addControls(new Control[] { control });
-	}
 	
 	public Control[] getZoomableControls() {
 		return new Control[] { control };
@@ -197,6 +195,11 @@ public abstract class GearController extends Composite {
 		}
 	}
 	
+	/**
+	 * ToolBar 進行搜尋後會執行的部分，通常會呼叫相關的 ConciseThread 進行
+	 * @param query
+	 */
+	public abstract void doit(CAQuery query);
 	
 	/**
 	 * Static method to return active gear view

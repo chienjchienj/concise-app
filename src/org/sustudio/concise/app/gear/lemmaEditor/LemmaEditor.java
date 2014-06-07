@@ -567,4 +567,9 @@ public class LemmaEditor extends GearController {
 		}
 		loadData();
 	}
+
+	@Override
+	public void doit(CAQuery query) {
+		throw new UnsupportedOperationException("Unsupported");
+	}
 }

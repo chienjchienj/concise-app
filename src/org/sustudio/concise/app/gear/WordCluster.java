@@ -16,9 +16,11 @@ import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.DefaultCollocQuery;
 import org.sustudio.concise.app.query.DefaultConcQuery;
-import org.sustudio.concise.app.toolbar.CASearchAction;
+import org.sustudio.concise.app.thread.CAClusterThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.cluster.Cluster;
@@ -181,8 +183,8 @@ public class WordCluster
 		if (table.getSelectionCount() == 1) {
 			String word = workspace.DATA.clusterList.get(table.getSelectionIndex()).word;
 			word = "\"" + word.trim() + "\"";	// add quotation mark to make phrase search 
-			Gear.Concordancer.open(workspace);
-			CASearchAction.doIt(new DefaultConcQuery(word));
+			Gear.Concordancer.open(workspace)
+				.doit(new DefaultConcQuery(word));
 		}
 	}
 
@@ -196,13 +198,19 @@ public class WordCluster
 		if (table.getSelectionCount() == 1) {
 			String word = workspace.DATA.clusterList.get(table.getSelectionIndex()).word;
 			word = "\"" + word.trim() + "\"";	// add quotation mark to make phrase search 
-			Gear.Collocator.open(workspace);
-			CASearchAction.doIt(new DefaultCollocQuery(word));
+			Gear.Collocator.open(workspace)
+				.doit(new DefaultCollocQuery(word));
 		}
 	}
 
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new CAClusterThread(query);
+		thread.start();
 	}
 }

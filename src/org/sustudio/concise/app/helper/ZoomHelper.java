@@ -2,7 +2,6 @@ package org.sustudio.concise.app.helper;
 
 import java.util.ArrayList;
 
-import org.eclipse.gef4.cloudio.TagCloud;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -11,6 +10,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Control;
 import org.sustudio.concise.app.gear.collocationalNetworker.NetworkGraph;
+import org.sustudio.concise.app.gear.wordClouder.WordCloud;
 
 public class ZoomHelper {
 
@@ -55,8 +55,8 @@ public class ZoomHelper {
 		
 	private static void zoom(int scale) {
 		for (Control control : controls) {
-			if (control instanceof TagCloud) {
-				zoomTagCloud((TagCloud) control, scale);
+			if (control instanceof WordCloud) {
+				zoomTagCloud((WordCloud) control, scale);
 				continue;
 			}
 			
@@ -101,7 +101,7 @@ public class ZoomHelper {
 		}
 	}
 	
-	private static void zoomTagCloud(TagCloud cloud, int scale) {
+	private static void zoomTagCloud(WordCloud cloud, int scale) {
 		switch (scale) {
 		case 1:		cloud.zoomIn();		break;
 		case -1: 	cloud.zoomOut(); 	break;

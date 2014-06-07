@@ -597,5 +597,10 @@ public class DocumentViewer
 			Dialog.showException(e);
 		}
 	}
+
+	@Override
+	public void doit(CAQuery query) {
+		throw new UnsupportedOperationException("Unsupported");
+	}
 	
 }

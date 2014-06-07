@@ -49,7 +49,6 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.query.DefaultConcQuery;
 import org.sustudio.concise.app.thread.ConciseThread;
-import org.sustudio.concise.app.toolbar.CASearchAction;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.concordance.Conc;
 import org.sustudio.concise.core.statistics.ConcisePCACorr;
@@ -165,6 +164,10 @@ public class ScatterPlotter extends GearController {
 		
 		fxCanvas.setScene(new Scene(border));
 		return fxCanvas;
+	}
+	
+	public Control[] getZoomableControls() {
+		return null;
 	}
 	
 	public void loadData() {
@@ -290,8 +293,8 @@ public class ScatterPlotter extends GearController {
 			setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
 					getChildren().clear();
-					Gear.Concordancer.open(workspace);
-					CASearchAction.doIt(new DefaultConcQuery(word.getWord()));
+					Gear.Concordancer.open(workspace)
+						.doit(new DefaultConcQuery(word.getWord()));
 				}
 			});
 		}

@@ -20,7 +20,7 @@ public class ClipboardHelper {
 	 * Copies image data to clipboard.
 	 * @param imageData		image data.
 	 */
-	public static void copyImageToClipBoard(ImageData imageData) {
+	public static void copyImageToClipboard(ImageData imageData) {
 		ImageTransfer imageTransfer = ImageTransfer.getInstance();
 		Clipboard clipboard = new Clipboard(Display.getDefault());
 		clipboard.setContents(new Object[] { imageData }, new Transfer[] { imageTransfer });

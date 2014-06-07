@@ -44,6 +44,7 @@ import org.sustudio.concise.app.dialog.CAOpenFilesDialog;
 import org.sustudio.concise.app.dialog.CASaveFileDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.CopyPasteHelper;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.core.CCPrefs;
@@ -291,5 +292,10 @@ public class StopWorder extends GearController {
 			}
 			
 		});
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		throw new UnsupportedOperationException("Unsupported");
 	}
 }

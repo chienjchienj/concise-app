@@ -33,6 +33,7 @@ import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.CADeleteDocumentThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.utils.RevealInFinder;
@@ -366,5 +367,10 @@ public class CorpusManager
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		throw new UnsupportedOperationException("Unsupported");
 	}
 }

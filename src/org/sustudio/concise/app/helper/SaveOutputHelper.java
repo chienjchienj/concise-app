@@ -34,7 +34,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
-import org.eclipse.gef4.cloudio.TagCloud;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.swt.SWT;
@@ -55,6 +54,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.gear.IGearTableBased;
 import org.sustudio.concise.app.gear.collocationalNetworker.NetworkGraph;
+import org.sustudio.concise.app.gear.wordClouder.WordCloud;
 import org.sustudio.concise.app.utils.ExcelWriter;
 import org.sustudio.concise.app.utils.ExcelWriter.Style;
 import org.sustudio.concise.app.widgets.CASpinner;
@@ -88,9 +88,9 @@ public class SaveOutputHelper {
 			enabled = ((Table) ctrl).getItemCount() > 0;
 		}
 		
-		else if (ctrl instanceof TagCloud) {
-			enabled = ((TagCloud) ctrl).getWords() != null &&
-					  !((TagCloud) ctrl).getWords().isEmpty();
+		else if (ctrl instanceof WordCloud) {
+			enabled = ((WordCloud) ctrl).getWords() != null &&
+					  !((WordCloud) ctrl).getWords().isEmpty();
 		}
 		
 		else if (ctrl instanceof NetworkGraph) {
@@ -113,6 +113,7 @@ public class SaveOutputHelper {
 			
 			CASaveFileDialog dlg = new CASaveFileDialog();
 			switch (gear) {
+			case ScatterPlotter:
 			case WordClouder:
 			case WordTrender:
 				dlg.setSaveImageConfigure();
@@ -194,8 +195,8 @@ public class SaveOutputHelper {
 	protected static void writeImage(File file) throws Exception {
 		ImageData imageData = null;
 		Control control = gear.getController(Concise.getCurrentWorkspace()).getControl();
-		if (control instanceof TagCloud)
-			imageData = ((TagCloud) control).getImageData();
+		if (control instanceof WordCloud)
+			imageData = ((WordCloud) control).getImageData();
 		else if (control instanceof NetworkGraph)
 			imageData = ((NetworkGraph) control).getImageData();
 		else if (control instanceof FXCanvas) {

@@ -33,6 +33,8 @@ import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.helper.SaveOutputHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.app.thread.CAConcThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.utils.RevealInFinder;
 import org.sustudio.concise.app.widgets.CASpinner;
@@ -372,5 +374,11 @@ public class Concordancer
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new CAConcThread(query);
+		thread.start();
 	}
 }

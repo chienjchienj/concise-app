@@ -13,6 +13,9 @@ import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.app.query.CAQuery;
+import org.sustudio.concise.app.thread.CAKeywordThread;
+import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.keyword.Keyword;
@@ -207,6 +210,12 @@ public class KeywordLister
 	@Override
 	public void showFinder() {
 		getFinder().setHidden(false);
+	}
+
+	@Override
+	public void doit(CAQuery query) {
+		ConciseThread thread = new CAKeywordThread(query);
+		thread.start();
 	}
 	
 }
