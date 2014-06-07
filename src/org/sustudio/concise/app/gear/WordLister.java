@@ -121,7 +121,7 @@ public class WordLister
 		*/
 		
 		// CCWord[] transfer dragSource
-	    Transfer[] types = new Transfer[] { CCWordsTransfer.getInstance() };
+	    Transfer[] types = new Transfer[] { WordsTransfer.getInstance() };
 	    final DragSource dragSource = new DragSource(tree, DND.DROP_COPY | DND.DROP_MOVE);
 	    dragSource.setTransfer(types);
 	    
@@ -142,7 +142,7 @@ public class WordLister
 	    	};
 	    	
 	    	public void dragSetData(DragSourceEvent event) {
-	    		if (CCWordsTransfer.getInstance().isSupportedType(event.dataType)) {
+	    		if (WordsTransfer.getInstance().isSupportedType(event.dataType)) {
 	    			List<Word> list = new ArrayList<Word>();
 		    		for (TreeItem item : tree.getSelection()) {
 		    			Word word = (Word) item.getData(CCWORD);

@@ -41,24 +41,16 @@ public enum CorpusManipulation {
 		return label;
 	}
 	
+	public Workspace.INDEX INDEX() {
+		return index;
+	}
+	
 	public ConciseFile indexDir() {
-		switch (index) {
-		default:
-		case DOCUMENT:
-			return workspace.getIndexDir();
-		case REFERENCE:
-			return workspace.getIndexDirRef();
-		}
+		return workspace.getIndexDir(index);		
 	}
 	
 	public IndexReader indexReader() throws Exception {
-		switch (index) {
-		case REFERENCE:
-			return workspace.getIndexReaderRef();
-		case DOCUMENT:
-		default:
-			return workspace.getIndexReader();		
-		}
+		return workspace.getIndexReader(index);
 	}
 	
 	public boolean isTokenized() {

@@ -1,11 +1,8 @@
 package org.sustudio.concise.app;
 
 import java.io.File;
-import java.util.Vector;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -18,7 +15,7 @@ import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.mainmenu.SystemMenu;
 import org.sustudio.concise.app.preferences.CAPrefsUtils;
-import org.sustudio.concise.app.utils.Platform;
+import org.sustudio.concise.app.utils.MacOSXUtils;
 
 /**
  * Concise main 起始的 class 
@@ -28,7 +25,7 @@ import org.sustudio.concise.app.utils.Platform;
  */
 public class Concise {
 
-	private static Vector<Workspace> workspaces = new Vector<Workspace>();
+	private static Set<Workspace> workspaces = new HashSet<Workspace>();
 	private static Workspace currentWorkspace;
 	
 	/**
@@ -139,15 +136,15 @@ public class Concise {
 
 	/**
 	 * 藉由工作路徑開啟 ConciseApp
-	 * @param workpath
+	 * @param workspaceFile
 	 */
-	public static void openApp(File workpath) {
+	public static void openApp(File workspaceFile) {
 		
 		try {
 			
 			// 檢查是不是已經載入了
 			for (Workspace w : workspaces) {
-				if (w.getFile().equals(workpath)) {
+				if (w.getFile().equals(workspaceFile)) {
 					// 已經載入了，只要讓它 active 就行
 					setActiveApp(w);
 					return;
@@ -156,14 +153,14 @@ public class Concise {
 			
 			Workspace ws = null;
 			try {	// test if the workspace is locked
-				ws = new Workspace(workpath);
+				ws = new Workspace(workspaceFile);
 			} catch (WorkspaceLockedException lock) {
 				Dialog.inform("Workspace is Locked!", lock.getMessage());
 				Launcher launcher = new Launcher();
 				launcher.open();
 				return;
 			}
-			hideWorkspaceExtension(workpath);
+			MacOSXUtils.hideExtension(workspaceFile);
 			RecentWorkspaces.setRecentWorkspaces(ws);
 			workspaces.add(ws);
 			currentWorkspace = ws;
@@ -189,21 +186,4 @@ public class Concise {
 		}
 	}
 	
-	
-	protected static void hideWorkspaceExtension(File workpath) {
-		// 在 Mac 下，隱藏副檔名
-		if (Platform.isMac() && workpath.exists() && workpath.isDirectory()) {
-			// always hide .conciseworkspace extension using AppleScript
-			// Mac Only
-			String script = "tell application \"Finder\" to set extension hidden of (POSIX file \""+ workpath.getPath() + "\" as alias) to true";
-			ScriptEngineManager mgr = new ScriptEngineManager();
-			ScriptEngine engine = mgr.getEngineByName("AppleScript");
-			try {
-				engine.eval(script);
-			} catch (ScriptException e) {
-				currentWorkspace.logError(null, e);
-				Dialog.showException(e);
-			}
-		}
-	}
 }

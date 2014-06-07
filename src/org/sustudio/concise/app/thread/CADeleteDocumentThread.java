@@ -11,7 +11,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
-import org.sustudio.concise.core.ConciseFile;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentWriter;
@@ -38,14 +38,14 @@ public class CADeleteDocumentThread extends ConciseThread {
 		
 		Workspace workspace = Concise.getCurrentWorkspace();
 		try {
-			ConciseFile indexDir = workspace.getIndexDirRef();
+			INDEX indexType = INDEX.REFERENCE;
 			if (gear == Gear.CorpusManager) {
-				AutoCompleter.removeInstanceFor(workspace.getIndexReader());
-				indexDir = workspace.getIndexDir();
+				indexType = INDEX.DOCUMENT;
+				AutoCompleter.removeInstanceFor(workspace.getIndexReader(indexType));
 			}
 			
 			dialog.setStatus("deleting...");
-			DocumentWriter writer = new DocumentWriter(indexDir);
+			DocumentWriter writer = new DocumentWriter(workspace, indexType);
 			if (deleteAll)
 				writer.deleteAll();
 			else
@@ -69,8 +69,8 @@ public class CADeleteDocumentThread extends ConciseThread {
 			}
 			
 			dialog.setStatus("re-open index directory...");
-			if (gear == Gear.CorpusManager && workspace.getIndexReader() != null) {
-				AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
+			if (gear == Gear.CorpusManager && workspace.getIndexReader(INDEX.DOCUMENT) != null) {
+				AutoCompleter.getInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT), CAPrefs.SHOW_PART_OF_SPEECH);
 			}
 		} catch (IOException e) {
 			workspace.logError(gear, e);

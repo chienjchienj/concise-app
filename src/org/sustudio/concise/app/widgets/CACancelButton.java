@@ -43,6 +43,7 @@ public class CACancelButton extends Canvas {
 	 */
 	public CACancelButton(Composite parent, int style) {
 		super(parent, style | SWT.DOUBLE_BUFFERED);
+		setBackground(parent.getBackground());
 		selectionListeners = new ArrayList<SelectionListener>();
 		addListeners();
 	}
@@ -181,8 +182,11 @@ public class CACancelButton extends Canvas {
 	private void drawBackground(final GC gc) {
 		if (hover) {
 			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
-			gc.fillOval(0, 0, width, height);
 		}
+		else {
+			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+		}
+		gc.fillOval(0, 0, width, height);
 	}
 	
 	void drawButton(final GC gc) {

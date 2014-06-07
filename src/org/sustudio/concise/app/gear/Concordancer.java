@@ -36,8 +36,9 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.CAConcThread;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
-import org.sustudio.concise.app.utils.RevealInFinder;
+import org.sustudio.concise.app.utils.MacOSXUtils;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.concordance.ConcLine;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
 
@@ -329,7 +330,7 @@ public class Concordancer
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
 				
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
+				final String filepath = workspace.getIndexReader(INDEX.DOCUMENT).document(docID).get(ConciseField.FILENAME.field());
 				return new File(filepath).exists();
 				
 			} catch (Exception e) {
@@ -345,9 +346,9 @@ public class Concordancer
 		if (table.getSelectionCount() == 1) {
 			int docID = (Integer) table.getSelection()[0].getData(_DOC_ID);
 			try {
-				final String filepath = workspace.getIndexReader().document(docID).get(ConciseField.FILENAME.field());
+				final String filepath = workspace.getIndexReader(INDEX.DOCUMENT).document(docID).get(ConciseField.FILENAME.field());
 				if (new File(filepath).exists()) {
-					RevealInFinder.show(filepath);
+					MacOSXUtils.revealInFinder(filepath);
 				}
 				
 			} catch (Exception e) {

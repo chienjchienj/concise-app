@@ -48,6 +48,7 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.core.CCPrefs;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.wordlister.Word;
 
 public class StopWorder extends GearController {
@@ -82,7 +83,7 @@ public class StopWorder extends GearController {
 		stopWord.setFocus();
 		CopyPasteHelper.listenTo(stopWord);
 		try {
-			stopWord.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+			stopWord.setIndexReader(Concise.getCurrentWorkspace().getIndexReader(INDEX.DOCUMENT));
 		} catch (IOException e) {
 			Concise.getCurrentWorkspace().logError(gear, e);
 			Dialog.showException(e);
@@ -133,7 +134,7 @@ public class StopWorder extends GearController {
 		
 		// add drop target
 		final DropTarget dropTarget = new DropTarget(wordsList , DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_DEFAULT);
-		dropTarget.setTransfer(new Transfer[] { CCWordsTransfer.getInstance(), TextTransfer.getInstance() });
+		dropTarget.setTransfer(new Transfer[] { WordsTransfer.getInstance(), TextTransfer.getInstance() });
 		dropTarget.addDropListener(new DropTargetAdapter() {
 
 			@Override
@@ -144,7 +145,7 @@ public class StopWorder extends GearController {
 				
 				// Allow dropping CCWord or text
 				for (int i = 0, n = event.dataTypes.length; i < n; i++) {
-					if (CCWordsTransfer.getInstance().isSupportedType(event.dataTypes[i])) {
+					if (WordsTransfer.getInstance().isSupportedType(event.dataTypes[i])) {
 						event.currentDataType = event.dataTypes[i];
 					}
 					else if (TextTransfer.getInstance().isSupportedType(event.dataTypes[i])) {

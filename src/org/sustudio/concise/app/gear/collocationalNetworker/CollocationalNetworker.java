@@ -40,7 +40,6 @@ import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.db.SQLUtils;
 import org.sustudio.concise.app.db.SQLiteDB;
-import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.Gear;
@@ -58,6 +57,7 @@ import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.collocation.Collocate;
 
 public class CollocationalNetworker 
@@ -160,7 +160,7 @@ public class CollocationalNetworker
 		text.setFont(getFont());
 		CopyPasteHelper.listenTo(text);
 		try {
-			text.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+			text.setIndexReader(Concise.getCurrentWorkspace().getIndexReader(INDEX.DOCUMENT));
 		} catch (IOException e) {
 			Concise.getCurrentWorkspace().logError(gear, e);
 			Dialog.showException(e);
@@ -213,61 +213,71 @@ public class CollocationalNetworker
 		
 		final CASpinner spinner = new CASpinner(this);
 		spinner.open();
-		try 
-		{
-			int batchSize = 0;
-			// read from database
-			SQLiteDB.createTableIfNotExists(CATable.CollocationalNetworker);
-			ResultSet rs = SQLiteDB.executeQuery("SELECT MAX(" + DBColumn.BatchIndex.columnName() + ") FROM " + CATable.CollocationalNetworker.name());
-			if (rs.next()) {
-				batchSize = rs.getInt(1) + 1;
-			}
-			rs.close();
-			
-			if (batchSize > 0) {
-				// load query
-				baseQuery = CAQueryUtils.getQuery(getGear());
-			}
-			
-			for (List<Collocate> list : this.collocateList) {
-				list.clear();
-			}
-			this.collocateList.clear();
-			
-			for (int i=0; i<batchSize; i++) 
-			{
-				ArrayList<Collocate> collList = new ArrayList<Collocate>();
-				String sql = SQLUtils.selectSyntax(CATable.CollocationalNetworker,
-												   DBColumn.BatchIndex.columnName() + " = " + i,
-												   DBColumn.NodeFreq,
-												   SWT.DOWN);
-				rs = SQLiteDB.executeQuery(sql);
-				while (rs.next()) {
-					String word = rs.getString(DBColumn.Collocate.columnName());
-					long signatureO = rs.getLong(DBColumn.SignatureO.columnName());
-					long signatureF1 = rs.getLong(DBColumn.SignatureF1.columnName());
-					long signatureF2 = rs.getLong(DBColumn.SignatureF2.columnName());
-					long signatureN = rs.getLong(DBColumn.SignatureN.columnName());
-					long nodeFreq = rs.getLong(DBColumn.NodeFreq.columnName());
-					Collocate collocate = new Collocate(word, signatureO, signatureF1, signatureF2, signatureN);
-					collocate.setNodeFreq(nodeFreq);
-					collList.add(collocate);
-				}
-				rs.close();
+		Thread thread = new Thread() {
+			public void run() {
+				try 
+				{
+					int batchSize = 0;
+					// read from database
+					SQLiteDB.createTableIfNotExists(CATable.CollocationalNetworker);
+					ResultSet rs = SQLiteDB.executeQuery("SELECT MAX(" + DBColumn.BatchIndex.columnName() + ") FROM " + CATable.CollocationalNetworker.name());
+					if (rs.next()) {
+						batchSize = rs.getInt(1) + 1;
+					}
+					rs.close();
+					
+					if (batchSize > 0) {
+						// load query
+						baseQuery = CAQueryUtils.getQuery(getGear());
+					}
+					
+					for (List<Collocate> list : collocateList) {
+						list.clear();
+					}
+					collocateList.clear();
+					
+					for (int i=0; i<batchSize; i++) 
+					{
+						ArrayList<Collocate> collList = new ArrayList<Collocate>();
+						String sql = SQLUtils.selectSyntax(CATable.CollocationalNetworker,
+														   DBColumn.BatchIndex.columnName() + " = " + i,
+														   DBColumn.NodeFreq,
+														   SWT.DOWN);
+						rs = SQLiteDB.executeQuery(sql);
+						while (rs.next()) {
+							String word = rs.getString(DBColumn.Collocate.columnName());
+							long signatureO = rs.getLong(DBColumn.SignatureO.columnName());
+							long signatureF1 = rs.getLong(DBColumn.SignatureF1.columnName());
+							long signatureF2 = rs.getLong(DBColumn.SignatureF2.columnName());
+							long signatureN = rs.getLong(DBColumn.SignatureN.columnName());
+							long nodeFreq = rs.getLong(DBColumn.NodeFreq.columnName());
+							Collocate collocate = new Collocate(word, signatureO, signatureF1, signatureF2, signatureN);
+							collocate.setNodeFreq(nodeFreq);
+							collList.add(collocate);
+						}
+						rs.close();
+						
+						if (!collList.isEmpty()) {
+							addInput(collList);
+						}
+					}
 				
-				if (!collList.isEmpty()) {
-					addInput(collList);
+				} catch (Exception e) {
+					workspace.logError(gear, e);
+					Dialog.showException(e);
 				}
+				
+				getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						redrawGraph();
+						resetStatus();
+						spinner.close();
+					}
+				});
 			}
-		
-		} catch (Exception e) {
-			CAErrorMessageDialog.open(getGear(), e);
-		}
-		
-		redrawGraph();
-		resetStatus();
-		
-		spinner.close();
+		};
+		thread.setDaemon(true);
+		thread.start();
 		super.loadData();
 	}
 	
@@ -518,23 +528,4 @@ public class CollocationalNetworker
 		ConciseThread thread = new CollocationalNetworkThread(query);
 		thread.start();
 	}
-
-	
-	
-	/*
-	 * Adjust connection weight.
-	 * TODO weight
-	private void adjustConnectionWeight() {
-		for(Iterator iterator = networkGraph.getConnections().iterator(); 
-				iterator.hasNext(); ) {
-			Object edge = iterator.next();
-			if (edge instanceof GraphConnection) {
-				GraphConnection conn = (GraphConnection) edge;
-				double value = CAPrefs.NETWORK_COMPARATOR.getValue((Collocate) conn.getData()); 
-				double weight = (value - minFilterValue) / (maxFilterValue - minFilterValue);
-				conn.setWeight(weight);
-			}
-		}
-	}
-	*/
 }

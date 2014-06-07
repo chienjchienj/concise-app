@@ -34,8 +34,6 @@ import org.sustudio.concise.core.wordlister.Word;
  */
 public class Workspace extends org.sustudio.concise.core.Workspace {
 	
-	public enum INDEX { DOCUMENT, REFERENCE }
-	
 	public Data DATA = new Data();
 
 	/** 資料庫的檔名 */
@@ -48,7 +46,6 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 	protected File lock;
 	protected Connection connection;
 	protected File temporaryDBFile;
-	private Thread backupThread;
 	
 	public Workspace(File workpath) throws IOException, WorkspaceLockedException {
 		super(workpath);
@@ -117,10 +114,6 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 	}
 	
 	public void close() throws IOException {
-		if (backupThread != null && backupThread.isAlive()) {
-			backupThread.interrupt();
-		}
-		super.close();
 		try {
 			closeConnection();
 		} catch (Exception e) {
@@ -128,6 +121,7 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 		}
 		logInfo(toString() + " closed.");
 		stopLogger();
+		super.close();
 	}
 	
 	/**
@@ -193,36 +187,12 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 			// 移檔案的同時也創造一個 symbol link ，免得當掉找不到檔案
 			Files.createSymbolicLink(dbAlias.toPath(), temporaryDBFile.toPath());
 		}
+		
 		if (temporaryDBFile.exists()) {
-			// TODO backup files
-			// create a backup db file
-			/*
-			backupThread = new Thread("Backup-thread") { 
-				public void run() {
-					while (!isInterrupted()) {
-						try {
-							if (temporaryDBFile.exists()) {
-								FileUtils.copyFile(temporaryDBFile, new File(getFile(), DB_FILENAME+"."+DB_EXTENSION+".bak"));
-								logInfo("Auto Backup");
-							}
-							Thread.sleep(CAPrefs.BACKUP_TIME_INTERVAL);	// 預設 15 分鐘備份一次
-							
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							// eat...
-						}
-					}
-				}
-			};
-			backupThread.setDaemon(true);
-			backupThread.start();
-			*/
-		}
-		if (temporaryDBFile.exists()) {
-			FileUtils.copyFile(temporaryDBFile, new File(getFile(), DB_FILENAME+"."+DB_EXTENSION+".bak"));
+			FileUtils.copyFile(temporaryDBFile, dbBackup);
 			logInfo("Auto Backup");
 		}
+		
 		String file = temporaryDBFile.getAbsolutePath();
 		
 		SQLiteDataSource dataSource = new SQLiteDataSource(config);

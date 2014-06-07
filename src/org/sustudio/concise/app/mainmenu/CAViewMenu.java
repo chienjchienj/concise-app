@@ -45,8 +45,6 @@ public class CAViewMenu extends CAMenuItem {
 		Menu toolMenu = addSubMenu(menu, CABundle.get("menu.view.tools"));
 		addGear(toolMenu, Gear.DocumentViewer);
 		addGear(toolMenu, Gear.LemmaEditor);
-		// TODO remove
-		//addGear(toolMenu, Gear.SearchWorder);
 		addGear(toolMenu, Gear.StopWorder);
 		
 		addSeparator();

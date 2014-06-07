@@ -15,7 +15,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
-import org.sustudio.concise.core.ConciseFile;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
@@ -54,7 +54,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		try {
 			
 			Workspace workspace = Concise.getCurrentWorkspace();
-			AutoCompleter.removeInstanceFor(workspace.getIndexReader());
+			AutoCompleter.removeInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT));
 			
 			// Drop database
 			SQLiteDB.dropTableIfExists(CATable.CorpusManager);
@@ -71,7 +71,7 @@ public class CAReTokenizeThread extends ConciseThread {
 			handleIndex(Workspace.INDEX.DOCUMENT);
 			handleIndex(Workspace.INDEX.REFERENCE);
 			
-			AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
+			AutoCompleter.getInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT), CAPrefs.SHOW_PART_OF_SPEECH);
 			
 		} catch (Exception e) {
 			CAErrorMessageDialog.open(gear, e);
@@ -80,7 +80,7 @@ public class CAReTokenizeThread extends ConciseThread {
 	}
 	
 	@SuppressWarnings("resource")
-	protected void handleIndex(Workspace.INDEX index) throws Exception {
+	protected void handleIndex(Workspace.INDEX indexType) throws Exception {
 		
 		/*
 		 * 1. read file list
@@ -89,12 +89,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		 */
 		
 		Workspace workspace = Concise.getCurrentWorkspace();
-		IndexReader reader = workspace.getIndexReader();
-		ConciseFile indexDir = workspace.getIndexDir();
-		if (index == Workspace.INDEX.REFERENCE) {
-			reader = workspace.getIndexReaderRef();
-			indexDir = workspace.getIndexDirRef();
-		}
+		IndexReader reader = workspace.getIndexReader(indexType);
 		if (reader == null) return;
 		
 		// 1.) Read corpus file list
@@ -109,13 +104,13 @@ public class CAReTokenizeThread extends ConciseThread {
 		}
 		
 		// 2.) remove existing index
-		DocumentWriter writer = new DocumentWriter(indexDir);
+		DocumentWriter writer = new DocumentWriter(workspace, indexType);
 		writer.deleteAll();
 		writer.close();
 		
 		// 3.) re-import files
 		dialog.setStatus("load settings...");
-		Importer importer = new Importer(indexDir);
+		Importer importer = new Importer(workspace, indexType);
 		for (Map.Entry<File, Boolean> file : files.entrySet()) {
 			if (isInterrupted()) return;
 			
@@ -128,13 +123,8 @@ public class CAReTokenizeThread extends ConciseThread {
 		importer.close();
 		files.clear();
 		
-		Gear gear = Gear.CorpusManager;
-		if (index == Workspace.INDEX.REFERENCE) {
-			reader = workspace.reopenIndexReader();
-		} else {
-			reader = workspace.reopenIndexReaderRef();
-			gear = Gear.ReferenceCorpusManager;
-		}
+		Gear gear = indexType.equals(INDEX.DOCUMENT) ? Gear.CorpusManager : Gear.ReferenceCorpusManager;
+		reader = workspace.reopenIndexReader(indexType);
 		if (reader == null) {
 			return;
 		}
@@ -150,7 +140,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		PreparedStatement ps = SQLiteDB.prepareStatement(table);
 		
 		int count = 0;
-		for (ConciseDocument doc : new DocumentIterator(workspace, reader)) 
+		for (ConciseDocument doc : new DocumentIterator(workspace, indexType)) 
 		{
 			ps.setInt	(1,  doc.docID);
 			ps.setString(2,  doc.title);

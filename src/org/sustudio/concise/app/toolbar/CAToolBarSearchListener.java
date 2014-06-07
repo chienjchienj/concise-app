@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.ToolItem;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.Dialog;
@@ -16,7 +17,9 @@ import org.sustudio.concise.core.concordance.Conc;
 public class CAToolBarSearchListener extends SelectionAdapter {
 	
 	public void widgetSelected(SelectionEvent event) {
-		widgetDefaultSelected(event);
+		if (event.widget instanceof ToolItem) {
+			widgetDefaultSelected(event);
+		}
 	}
 	
 	public void widgetDefaultSelected(SelectionEvent event) {

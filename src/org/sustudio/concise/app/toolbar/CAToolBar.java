@@ -28,6 +28,7 @@ import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.utils.Platform;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
+import org.sustudio.concise.core.Workspace.INDEX;
 
 public class CAToolBar {
 	
@@ -69,7 +70,7 @@ public class CAToolBar {
 		txtSearch.addSelectionListener(new CAToolBarSearchListener());
 		CopyPasteHelper.listenTo(txtSearch);
 		try {
-			txtSearch.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
+			txtSearch.setIndexReader(Concise.getCurrentWorkspace().getIndexReader(INDEX.DOCUMENT));
 		} catch (IOException e) {
 			Concise.getCurrentWorkspace().logError(null, e);
 			Dialog.showException(e);

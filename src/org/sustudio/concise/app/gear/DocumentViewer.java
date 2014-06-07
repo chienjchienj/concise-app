@@ -43,7 +43,7 @@ import org.sustudio.concise.app.helper.ZoomHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
-import org.sustudio.concise.app.utils.RevealInFinder;
+import org.sustudio.concise.app.utils.MacOSXUtils;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 import org.sustudio.concise.app.widgets.CANavigationButton;
 import org.sustudio.concise.app.widgets.CANavigationButton.NavigationEvent;
@@ -51,6 +51,7 @@ import org.sustudio.concise.app.widgets.CANavigationButton.NavigationListener;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.Config;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.concordance.LineAndWhitespaceTokenizer;
 import org.sustudio.concise.core.concordance.PartOfSpeechFilter;
@@ -82,7 +83,7 @@ public class DocumentViewer
 	public DocumentViewer() {
 		super(CABox.ToolBox, Gear.DocumentViewer);
 		try {
-			this.reader = workspace.getIndexReader();
+			this.reader = workspace.getIndexReader(INDEX.DOCUMENT);
 		} catch (IOException e) {
 			workspace.logError(gear, e);
 			Dialog.showException(e);
@@ -408,7 +409,7 @@ public class DocumentViewer
 	 */
 	public void open(final int docID) {
 		try {
-			open(docID, workspace.getIndexReader());
+			open(docID, workspace.getIndexReader(INDEX.DOCUMENT));
 		} catch (Exception e) {
 			workspace.logError(gear, e);
 			Dialog.showException(e);
@@ -575,7 +576,7 @@ public class DocumentViewer
 		try {
 			
 			final String filepath = reader.document(highlightDocId).get(ConciseField.FILENAME.field());
-			RevealInFinder.show(filepath);
+			MacOSXUtils.revealInFinder(filepath);
 			
 		} catch (Exception e) {
 			Concise.getCurrentWorkspace().logError(gear, e);

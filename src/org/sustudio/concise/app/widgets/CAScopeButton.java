@@ -61,6 +61,7 @@ public class CAScopeButton extends Canvas {
 		selectionListeners = new ArrayList<SelectionListener>();
 		addListeners();
 		setFont(SWTResourceManager.getFont("Lucida Grande", 10, SWT.NORMAL));
+		setBackground(parent.getBackground());
 		
 		if ((style & SWT.POP_UP) != 0) {
 			popupMenu = new Menu(this);

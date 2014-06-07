@@ -35,10 +35,6 @@ public class CAPrefs extends CCPrefs implements Serializable {
 	public static Gear LAST_ACTIVE_GEAR;
 	
 	
-	/** 資料庫自動備份的時間間隔 （單位：ms） */
-	public static long BACKUP_TIME_INTERVAL = 900000;
-	
-	
 	/** 顯示詞性（part-of-speech）標籤 */
 	public static boolean SHOW_PART_OF_SPEECH = false;
 	

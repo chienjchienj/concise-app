@@ -46,6 +46,7 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.concordance.Conc;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
@@ -147,7 +148,7 @@ public class WordTrender extends GearController {
 		CASpinner spinner = new CASpinner(this);
 		spinner.open();
 		try {
-			if (docs.size() != workspace.getIndexReader().numDocs()) {
+			if (docs.size() != workspace.getIndexReader(INDEX.DOCUMENT).numDocs()) {
 				docs.clear();
 				for (ConciseDocument d : new DocumentIterator(workspace)) {
 					docs.add(d);

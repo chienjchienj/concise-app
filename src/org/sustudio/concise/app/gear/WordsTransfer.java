@@ -11,16 +11,16 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.TransferData;
 import org.sustudio.concise.core.wordlister.Word;
 
-public class CCWordsTransfer extends ByteArrayTransfer {
+public class WordsTransfer extends ByteArrayTransfer {
 
 	/* The data flavor must be MIME type-like */
 	static final String MIME_TYPE = "custom/ConciseWord"; // $NON-NLS-1$
 	
-	private static CCWordsTransfer _instance;
+	private static WordsTransfer _instance;
 	
-	public static CCWordsTransfer getInstance() {
+	public static WordsTransfer getInstance() {
 		if (_instance == null) {
-			_instance = new CCWordsTransfer();
+			_instance = new WordsTransfer();
 		}
 		return _instance;
 	}

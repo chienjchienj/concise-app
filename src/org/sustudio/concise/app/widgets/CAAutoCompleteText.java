@@ -30,6 +30,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.preferences.CAPrefs;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.wordlister.Word;
 
@@ -116,7 +117,7 @@ public class CAAutoCompleteText extends Text {
 							try {
 								AutoCompleter.removeInstanceFor(reader);
 								
-								reader = Concise.getCurrentWorkspace().getIndexReader();
+								reader = Concise.getCurrentWorkspace().getIndexReader(INDEX.DOCUMENT);
 								result = AutoCompleter.getInstanceFor(reader, CAPrefs.SHOW_PART_OF_SPEECH).lookup(string, 7);
 								
 							} catch (Exception e1) {

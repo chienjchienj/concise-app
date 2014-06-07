@@ -48,7 +48,7 @@ import org.sustudio.concise.app.dialog.CASaveFileDialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.GearController;
-import org.sustudio.concise.app.gear.CCWordsTransfer;
+import org.sustudio.concise.app.gear.WordsTransfer;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.ConciseThread;
@@ -244,12 +244,12 @@ public class LemmaEditor extends GearController {
 	    });
 	    
 	    DropTarget target = new DropTarget(tree, DND.DROP_COPY | DND.DROP_MOVE);
-	    target.setTransfer(new Transfer[] { CCWordsTransfer.getInstance(), TextTransfer.getInstance() });
+	    target.setTransfer(new Transfer[] { WordsTransfer.getInstance(), TextTransfer.getInstance() });
 	    target.addDropListener(new DropTargetAdapter() {
 	    	
 	    	public void dragEnter(DropTargetEvent event) {
 	    		for (int i = 0; i < event.dataTypes.length; i++) {
-	    			if (CCWordsTransfer.getInstance().isSupportedType(event.dataTypes[i])) {
+	    			if (WordsTransfer.getInstance().isSupportedType(event.dataTypes[i])) {
 	    				event.currentDataType = event.dataTypes[i];
 	    				// CCWord 是從另外一個 Gear 來的，所以永遠都只用 Copy
 	    				if (event.detail != DND.DROP_COPY) {

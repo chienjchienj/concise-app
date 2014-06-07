@@ -14,8 +14,8 @@ import org.sustudio.concise.app.enums.CorpusManipulation;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
-import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.Workspace;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
@@ -38,20 +38,19 @@ public class CAImportThread extends ConciseThread {
 
 	@Override
 	public void running() {
-		ConciseFile indexDir = manipulation.indexDir();
 		try {
 			dialog.setStatus("checking file existence...");
 			
 			Workspace workspace = Concise.getCurrentWorkspace();
 			if (gear == Gear.CorpusManager) {
-				AutoCompleter.removeInstanceFor(workspace.getIndexReader());
+				AutoCompleter.removeInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT));
 			}
 			
 			// load existing files to check duplication
 			// using MD5 to check 
 			ArrayList<String> existingMD5s = new ArrayList<String>();
 			try {
-				for (ConciseDocument cd : new DocumentIterator(workspace, manipulation.indexReader())) {
+				for (ConciseDocument cd : new DocumentIterator(workspace, manipulation.INDEX())) {
 					String md5 = ConciseFileUtils.getMD5(cd.documentFile);
 					existingMD5s.add(md5);
 				}
@@ -61,7 +60,7 @@ public class CAImportThread extends ConciseThread {
 			}
 			
 			dialog.setStatus("load settings...");
-			Importer importer = new Importer(indexDir);
+			Importer importer = new Importer(workspace, manipulation.INDEX());
 			for (File sourceFile : files) {
 				if (isInterrupted()) {
 					break;
@@ -80,14 +79,11 @@ public class CAImportThread extends ConciseThread {
 			existingMD5s = null;
 			
 			dialog.setStatus("re-open index directory...");
+			workspace.reopenIndexReader(manipulation.INDEX());
 			if (gear == Gear.CorpusManager) {
-				workspace.reopenIndexReader();
-				if (workspace.getIndexReader() != null) {
-					AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
+				if (workspace.getIndexReader(INDEX.DOCUMENT) != null) {
+					AutoCompleter.getInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT), CAPrefs.SHOW_PART_OF_SPEECH);
 				}
-			}
-			else if (gear == Gear.ReferenceCorpusManager) {
-				workspace.reopenIndexReaderRef();
 			}
 			
 			dialog.setStatus("loading data...");
@@ -100,7 +96,7 @@ public class CAImportThread extends ConciseThread {
 			PreparedStatement ps = SQLiteDB.prepareStatement(table);
 			
 			int count = 0;
-			for (ConciseDocument doc : new DocumentIterator(workspace, manipulation.indexReader())) 
+			for (ConciseDocument doc : new DocumentIterator(workspace, manipulation.INDEX())) 
 			{
 				ps.setInt	(1,  doc.docID);
 				ps.setString(2,  doc.title);

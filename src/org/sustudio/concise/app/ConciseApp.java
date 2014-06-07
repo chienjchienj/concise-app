@@ -25,6 +25,7 @@ import org.sustudio.concise.app.preferences.CAPrefsUtils;
 import org.sustudio.concise.app.toolbar.CAToolBar;
 import org.sustudio.concise.app.widgets.GearBoxView;
 import org.sustudio.concise.app.widgets.ToolBoxView;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 
 /**
@@ -62,10 +63,6 @@ public class ConciseApp extends Shell {
 		
 		// create tool bar, gear box, and tool box
 		createContainer();
-		
-		// initialize gears (gears to open)
-		initGears();
-		
 		
 		// app 變成 active 時要處理的...
 		addShellListener(new ShellAdapter() {
@@ -139,6 +136,14 @@ public class ConciseApp extends Shell {
 	}
 	
 	
+	public void open() {
+		super.open();
+		
+		// initialize gears (gears to open)
+		initGears();
+	}
+	
+	
 	/**
 	 * Initialize Gears
 	 */
@@ -161,8 +166,9 @@ public class ConciseApp extends Shell {
 		Thread thread = new Thread() { public void run() {
 			try {
 				
-				if (workspace.getIndexReader() != null) {
-					AutoCompleter.getInstanceFor(workspace.getIndexReader(), CAPrefs.SHOW_PART_OF_SPEECH);
+				if (workspace.getIndexReader(INDEX.DOCUMENT) != null) {
+					AutoCompleter.getInstanceFor(workspace.getIndexReader(INDEX.DOCUMENT), 
+												 CAPrefs.SHOW_PART_OF_SPEECH);
 				}
 				
 			} catch (Exception e) {

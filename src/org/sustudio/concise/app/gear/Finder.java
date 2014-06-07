@@ -75,6 +75,7 @@ public class Finder extends Composite {
 	public Finder(Gear gear) {
 		super(gear.getController(Concise.getCurrentWorkspace()), SWT.EMBEDDED);
 		this.gear = gear;
+		setBackground(getDisplay().getSystemColor(SWT.COLOR_GRAY));
 		
 		GridLayout gridLayout = new GridLayout(5, false);
 		gridLayout.marginRight = 3;

@@ -18,6 +18,7 @@ import org.sustudio.concise.app.helper.CopyPasteHelper;
 import org.sustudio.concise.app.thread.CAImportWorkspaceThread;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.core.Workspace;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
 import org.eclipse.swt.layout.GridLayout;
@@ -246,7 +247,7 @@ public class ImportWorkspaceDialog extends Shell {
 				try {
 					Workspace w = getWorkspace(workpath);
 					if (w != null) {
-						for (ConciseDocument cd : new DocumentIterator(w, w.getIndexReader())) {
+						for (ConciseDocument cd : new DocumentIterator(w, INDEX.DOCUMENT)) {
 							Doc d = new Doc();
 							d.doc = cd;
 							documents.add(d);

@@ -16,8 +16,8 @@ public class CARoundedRectangleButton extends RoundedToolbar {
 	
 	public CARoundedRectangleButton(Composite parent) {
 		super(parent, SWT.NONE);
-		this.setCornerRadius(16);
-		this.setFont(SWTResourceManager.getFont("Lucida Grande", 11, SWT.NORMAL));
+		setCornerRadius(16);
+		setFont(SWTResourceManager.getFont("Lucida Grande", 11, SWT.NORMAL));
 		
 		item = new RoundedToolItem(this);
 		item.setHeight(16);

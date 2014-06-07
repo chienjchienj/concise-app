@@ -36,8 +36,9 @@ import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.CADeleteDocumentThread;
 import org.sustudio.concise.app.utils.Formats;
-import org.sustudio.concise.app.utils.RevealInFinder;
+import org.sustudio.concise.app.utils.MacOSXUtils;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
 
@@ -45,6 +46,7 @@ public class CorpusManager
 	   extends GearController 
 	   implements IGearTableBased, IGearSortable, IGearFilterable, IGearFileRevealable {
 	
+	private final INDEX indexType;
 	private List<ConciseDocument> docList;
 	private Table table;
 	
@@ -55,10 +57,16 @@ public class CorpusManager
 	public CorpusManager(Gear gear) {
 		super(CABox.GearBox, gear);
 		switch (gear) {
-		case CorpusManager:				docList = Concise.getData().documentList;			break;
-		case ReferenceCorpusManager:	docList = Concise.getData().referenceDocumentList;	break;
 		default:
-			return;
+		case CorpusManager:
+			docList = Concise.getData().documentList;
+			indexType = INDEX.DOCUMENT;
+			break;
+		
+		case ReferenceCorpusManager:	
+			docList = Concise.getData().referenceDocumentList;	
+			indexType = INDEX.REFERENCE;
+			break;
 		}
 	}
 
@@ -169,15 +177,7 @@ public class CorpusManager
 		
 		try {
 			
-			IndexReader reader = null;
-			switch (getGear()) {
-			case CorpusManager:	
-				reader = workspace.getIndexReader(); break;
-			case ReferenceCorpusManager:
-				reader =  workspace.getIndexReaderRef(); break;
-			default:
-				break;
-			}
+			IndexReader reader = workspace.getIndexReader(indexType);
 			
 			// re-counting document list
 			if (reader != null &&  
@@ -195,7 +195,7 @@ public class CorpusManager
 				PreparedStatement ps = SQLiteDB.prepareStatement(table);
 				
 				int count = 0;
-				for (ConciseDocument doc : new DocumentIterator(workspace, reader)) 
+				for (ConciseDocument doc : new DocumentIterator(workspace, indexType)) 
 				{
 					ps.setInt	(1,  doc.docID);
 					ps.setString(2,  doc.title);
@@ -251,10 +251,7 @@ public class CorpusManager
 				doc.numWords = 		rs.getInt(		DBColumn.NumWords.columnName());
 				doc.numParagraphs = rs.getInt(		DBColumn.NumParagraphs.columnName());
 				doc.filename = 		rs.getString(	DBColumn.Filepath.columnName());
-				if (gear == Gear.CorpusManager)
-					doc.documentFile = new File(workspace.getOriginalDocFolder(), doc.filename);
-				else
-					doc.documentFile = new File(workspace.getOriginalRefFolder(), doc.filename);
+				doc.documentFile = 	new File(workspace.getOriginalDocFolder(indexType), doc.filename);
 				docList.add(doc);
 			}
 			rs.close();
@@ -328,7 +325,7 @@ public class CorpusManager
 		if (table.getSelectionCount() == 1) {
 			final ConciseDocument doc = docList.get(table.getSelectionIndex());
 			try {
-				RevealInFinder.show(doc.documentFile);
+				MacOSXUtils.revealInFinder(doc.documentFile);
 			} catch (IOException e) {
 				workspace.logError(gear, e);
 				Dialog.showException(e);
@@ -343,15 +340,7 @@ public class CorpusManager
 			Integer docID = (Integer) item.getData(_DOC_ID);
 			if (docID != null) {
 				try {
-					IndexReader reader = null;
-					switch (getGear()) {
-					case CorpusManager:	
-						reader = workspace.getIndexReader(); break;
-					case ReferenceCorpusManager:
-						reader =  workspace.getIndexReaderRef(); break;
-					default:
-						break;
-					}
+					IndexReader reader = workspace.getIndexReader(indexType);
 					if (reader != null) {
 						DocumentViewer fv = (DocumentViewer) Gear.DocumentViewer.open(workspace);
 						fv.open(docID, reader);

@@ -5,13 +5,12 @@ import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.index.IndexNotFoundException;
-import org.apache.lucene.index.IndexReader;
 import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.query.CAQuery;
-import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.Workspace;
+import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
 import org.sustudio.concise.core.corpus.DocumentWriter;
@@ -20,6 +19,7 @@ import org.sustudio.concise.core.corpus.importer.ConciseFileUtils;
 public class CAImportWorkspaceThread extends ConciseThread {
 
 	private final Workspace sourceWorkspace;
+	private final INDEX indexType;
 	private ConciseDocument[] documents;
 	
 	public CAImportWorkspaceThread(Gear gear, Workspace source, ConciseDocument[] documents) {
@@ -27,6 +27,13 @@ public class CAImportWorkspaceThread extends ConciseThread {
 		
 		this.sourceWorkspace = source;
 		this.documents = documents;
+		switch (gear) {
+		default:
+		case CorpusManager:
+			indexType = INDEX.DOCUMENT; 	break;
+		case ReferenceCorpusManager:
+			indexType = INDEX.REFERENCE;	break;
+		}
 		
 		gear.open(Concise.getCurrentWorkspace());
 	}
@@ -35,18 +42,12 @@ public class CAImportWorkspaceThread extends ConciseThread {
 	public void running() {
 		try {
 			Workspace workspace = Concise.getCurrentWorkspace();
-			IndexReader reader = workspace.getIndexReaderRef();
-			ConciseFile indexDir = workspace.getIndexDirRef();
-			if (Gear.CorpusManager.equals(gear)) {
-				reader = workspace.getIndexReader();
-				indexDir = workspace.getIndexDir();
-			}
 			
 			// load existing files to check duplication
 			// using MD5 to check 
 			ArrayList<String> existingMD5s = new ArrayList<String>();
 			try {
-				DocumentIterator iter = new DocumentIterator(Concise.getCurrentWorkspace(), reader);
+				DocumentIterator iter = new DocumentIterator(workspace, indexType);
 				for (ConciseDocument cd : iter) {
 					String md5 = ConciseFileUtils.getMD5(cd.documentFile);
 					existingMD5s.add(md5);
@@ -67,7 +68,7 @@ public class CAImportWorkspaceThread extends ConciseThread {
 					System.out.println(cd.toString());
 			}
 			
-			DocumentWriter writer = new DocumentWriter(indexDir);
+			DocumentWriter writer = new DocumentWriter(workspace, indexType);
 			writer.addConciseDocuments(docs);
 			writer.close();
 			docs.clear();
@@ -92,11 +93,7 @@ public class CAImportWorkspaceThread extends ConciseThread {
 			existingMD5s.clear();
 			existingMD5s = null;
 			
-			if (Gear.CorpusManager.equals(gear))
-				workspace.reopenIndexReader();
-			else
-				workspace.reopenIndexReaderRef();
-			
+			workspace.reopenIndexReader(indexType);
 			
 		} catch (Exception e) {
 			Concise.getCurrentWorkspace().logError(gear, e);
