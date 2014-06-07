@@ -79,6 +79,7 @@ public class WordClouder extends GearController {
 		wordCloud.setEnabled(false);
 		
 		labelProvider = new CloudLabelProvider();
+		// TODO 改寫 TagCloudViewer，不要 jface 的 viewer
 		viewer = new TagCloudViewer(wordCloud);
 		viewer.setLabelProvider(labelProvider);
 		viewer.setContentProvider(new IStructuredContentProvider() {

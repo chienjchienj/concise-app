@@ -43,7 +43,6 @@ import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
-import org.sustudio.concise.app.enums.SearchAction;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.gear.IGearCollocatable;
@@ -115,7 +114,6 @@ public class CollocationalNetworker
 				// expand network
 				//   build a new concise query
 				CAQuery subQuery = new CAQuery(baseQuery);
-				subQuery.searchAction = SearchAction.WORD;
 				subQuery.searchStr = nodeWord;
 				CollocationalNetworkThread thread = new CollocationalNetworkThread(subQuery, true);
 				//thread.setCancelWarningMessage("Do you want to cancel current task?");
@@ -155,7 +153,6 @@ public class CollocationalNetworker
 				
 				// create a sub-query
 				CAQuery subQuery = new CAQuery(baseQuery);
-				subQuery.searchAction = SearchAction.WORD;
 				subQuery.searchStr = text.getText().trim();
 				CollocationalNetworkThread thread = new CollocationalNetworkThread(subQuery, true);
 				thread.start();

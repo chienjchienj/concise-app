@@ -39,11 +39,6 @@
       	<scope>system</scope>
 		<systemPath>${project.basedir}/lib/opal-0.9.9e.jar</systemPath>
 	</dependency>
-  	<dependency>
-  		<groupId>com.aquafx-project</groupId>
-  		<artifactId>aquafx</artifactId>
-  		<version>0.1</version>
-  	</dependency>
   </dependencies>
   <url>http://concise.sustudio.org</url>
   <name>Concise</name>

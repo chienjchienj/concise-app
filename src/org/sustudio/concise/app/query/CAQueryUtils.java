@@ -15,7 +15,6 @@ import org.sustudio.concise.app.db.SQLUtils;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
-import org.sustudio.concise.app.enums.SearchAction;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
@@ -35,10 +34,9 @@ public class CAQueryUtils {
 		PreparedStatement ps = SQLiteDB.prepareStatement(psSQL);
 		ps.setString	(1, query.getGear().name());
 		ps.setString	(2, query.searchStr);
-		ps.setString	(3, query.searchAction.name());
-		ps.setInt		(4, query.leftSpanSize);
-		ps.setInt		(5, query.rightSpanSize);
-		ps.setBoolean	(6, query.ngram);
+		ps.setInt		(3, query.leftSpanSize);
+		ps.setInt		(4, query.rightSpanSize);
+		ps.setBoolean	(5, query.ngram);
 		ps.executeUpdate();
 		ps.close();
 		Concise.getCurrentWorkspace().getConnection().commit();
@@ -54,7 +52,6 @@ public class CAQueryUtils {
 		ResultSet rs = SQLiteDB.executeQuery(sql);
 		if (rs.next()) {	// there should always be only 1 record.
 			result = new CAQuery(gear);
-			result.searchAction 	= SearchAction.valueOf(rs.getString(DBColumn.SearchAction.columnName()));
 			result.searchStr 		= rs.getString(DBColumn.SearchString.columnName());
 			result.leftSpanSize 	= rs.getInt(DBColumn.LeftSpanSize.columnName());
 			result.rightSpanSize	= rs.getInt(DBColumn.RightSpanSize.columnName());

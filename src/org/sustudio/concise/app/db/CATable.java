@@ -7,7 +7,7 @@ public enum CATable {
 	CAQuery(new DBColumn[] {
 					DBColumn.Gear,
 					DBColumn.SearchString,
-					DBColumn.SearchAction,
+					//DBColumn.SearchAction,
 					DBColumn.LeftSpanSize,
 					DBColumn.RightSpanSize,
 					DBColumn.NGram }),

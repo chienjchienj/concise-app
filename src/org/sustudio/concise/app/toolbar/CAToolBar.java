@@ -2,7 +2,6 @@ package org.sustudio.concise.app.toolbar;
 
 import java.io.IOException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -21,14 +20,12 @@ import org.mihalis.opal.promptSupport.PromptSupport;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.ConciseApp;
 import org.sustudio.concise.app.enums.CorpusManipulation;
-import org.sustudio.concise.app.enums.SearchAction;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.helper.CopyPasteHelper;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.resources.CABundle;
-import org.sustudio.concise.app.toolbar.CAToolBarGoToolItem.MODE;
 import org.sustudio.concise.app.utils.Platform;
 import org.sustudio.concise.app.widgets.CAAutoCompleteText;
 
@@ -36,7 +33,7 @@ public class CAToolBar {
 	
 	private final Spinner leftSpan;
 	private final Spinner rightSpan;
-	private final CAToolBarGoToolItem tltmGo;
+	private final ToolItem tltmGo;
 	private final ToolItem tltmNgram;
 	private final CAAutoCompleteText txtSearch;
 	
@@ -69,7 +66,7 @@ public class CAToolBar {
 		
 		txtSearch = new CAAutoCompleteText(toolBar, SWT.BORDER | SWT.SEARCH | SWT.CANCEL);
 		PromptSupport.setPrompt("search", txtSearch);
-		txtSearch.addSelectionListener(new CAToolBarSearchActionListener());
+		txtSearch.addSelectionListener(new CAToolBarSearchListener());
 		CopyPasteHelper.listenTo(txtSearch);
 		try {
 			txtSearch.setIndexReader(Concise.getCurrentWorkspace().getIndexReader());
@@ -78,13 +75,22 @@ public class CAToolBar {
 			Dialog.showException(e);
 		}
 		
+		ToolItem tltmSearchbox = new ToolItem(toolBar, SWT.SEPARATOR);
+		tltmSearchbox.setText("SearchBox");
+		tltmSearchbox.setWidth(200);
+		tltmSearchbox.setControl(txtSearch);
+		
+		tltmGo = new ToolItem(toolBar, SWT.NONE);
+		tltmGo.setText("Go");
+		tltmGo.setImage(SWTResourceManager.getImage(CAToolBar.class, "/org/sustudio/concise/app/icon/06-magnify-20x20.png"));
+		tltmGo.addSelectionListener(new CAToolBarSearchListener());
 		
 		leftSpan = new Spinner(toolBar, SWT.BORDER);
 		leftSpan.setPageIncrement(5);
 		leftSpan.setSelection(4);
 		leftSpan.setToolTipText("Left Span Size (tokens)");
 		leftSpan.pack();
-		leftSpan.addSelectionListener(new CAToolBarSearchActionListener());
+		leftSpan.addSelectionListener(new CAToolBarSearchListener());
 		leftSpan.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				if (tltmNgram.getEnabled() && tltmNgram.getSelection()) {
@@ -93,30 +99,16 @@ public class CAToolBar {
 			}
 		});
 		
+		final ToolItem tltmLeftSpan = new ToolItem(toolBar, SWT.SEPARATOR);
+		tltmLeftSpan.setWidth(leftSpan.getSize().x);
+		tltmLeftSpan.setControl(leftSpan);
+		
 		rightSpan = new Spinner(toolBar, SWT.BORDER);
 		rightSpan.setPageIncrement(5);
 		rightSpan.setSelection(4);
 		rightSpan.setToolTipText("Right Span Size (tokens)");
 		rightSpan.pack();
-		rightSpan.addSelectionListener(new CAToolBarSearchActionListener());
-				
-		// tab order
-		txtSearch.addKeyListener(new TabKeyListener(rightSpan, leftSpan));
-		leftSpan.addKeyListener(new TabKeyListener(txtSearch, rightSpan));
-		rightSpan.addKeyListener(new TabKeyListener(leftSpan, txtSearch));
-		
-		
-		ToolItem tltmSearchbox = new ToolItem(toolBar, SWT.SEPARATOR);
-		tltmSearchbox.setText("SearchBox");
-		tltmSearchbox.setWidth(200);
-		tltmSearchbox.setControl(txtSearch);
-		
-		tltmGo = new CAToolBarGoToolItem(toolBar, txtSearch);
-		tltmGo.addSelectionListener(new CAToolBarSearchActionListener());
-		
-		final ToolItem tltmLeftSpan = new ToolItem(toolBar, SWT.SEPARATOR);
-		tltmLeftSpan.setWidth(leftSpan.getSize().x);
-		tltmLeftSpan.setControl(leftSpan);
+		rightSpan.addSelectionListener(new CAToolBarSearchListener());
 		
 		final ToolItem tltmRightSpan = new ToolItem(toolBar, SWT.SEPARATOR);
 		tltmRightSpan.setWidth(rightSpan.getSize().x);
@@ -133,12 +125,12 @@ public class CAToolBar {
 				rightSpan.setEnabled(!selection);
 				
 				if (tltmNgram.getSelection()) {
-					tltmGo.setMode(MODE.GO);
 					leftSpan.setSelection(2);
 					rightSpan.setSelection(2);
 				}
 				else {
-					tltmGo.setMode(MODE.SEARCH);
+					leftSpan.setEnabled(true);
+					rightSpan.setEnabled(true);
 					txtSearch.setFocus();
 				}
 			}
@@ -151,10 +143,18 @@ public class CAToolBar {
 		
 		new CAToolBarGearToolItem(toolBar);
 		
+		
 		// set tab oder
 		// this is not working....
 		// use self-made tab key listener
 		//toolBar.setTabList(new Control[] { txtSearch, leftSpan, rightSpan } );
+		
+		// tab order
+		txtSearch.addKeyListener(new TabKeyListener(rightSpan, leftSpan));
+		leftSpan.addKeyListener(new TabKeyListener(txtSearch, rightSpan));
+		rightSpan.addKeyListener(new TabKeyListener(leftSpan, txtSearch));
+				
+				
 		
 		if (gear == null) {
 			setToolBarLayout(Gear.CorpusManager);
@@ -184,34 +184,6 @@ public class CAToolBar {
 				break;
 			}
 			tltmNgram.setSelection(query.ngram);
-			
-			
-			////////////////////////////////////////////////////////////////////////////
-			// GO button
-			////////////////////////////////////////////////////////////////////////////
-			tltmGo.setEnabled(true);
-			switch (gear) {
-			case Concordancer:
-			case ConcordancePlotter:
-			case WordTrender:
-			case ScatterPlotter:
-			case Collocator:
-			case CollocationalNetworker:
-				tltmGo.setMode(MODE.SEARCH);
-				break;
-			case WordCluster:
-				tltmGo.setMode(tltmNgram.getSelection() ? MODE.GO : MODE.SEARCH);
-				break;
-			case WordLister:
-			case WordClouder:
-			case KeywordLister:
-				tltmGo.setMode(MODE.GO);
-				break;
-			default:
-				tltmGo.setMode(MODE.GO);
-				tltmGo.setEnabled(false);
-			}
-			tltmGo.setAction(query.searchAction);
 			
 			
 			////////////////////////////////////////////////////////////////////////////
@@ -305,16 +277,6 @@ public class CAToolBar {
 	}
 	
 	/**
-	 * Returns action type defined in {@link SearchAction}. 
-	 * @return action type.
-	 */
-	public SearchAction getSearchAction() {
-		//return action;
-		return tltmGo.action;
-	}
-		
-	
-	/**
 	 * Returns true if Ngram is on; false otherwise.
 	 * @return true if Ngram is on; false otherwise.
 	 */
@@ -333,19 +295,10 @@ public class CAToolBar {
 	public CAQuery getQuery() {
 		CAQuery q = new CAQuery(gear);
 		q.searchStr = txtSearch.getText().trim();
-		q.searchAction = tltmGo.action;
 		q.leftSpanSize = leftSpan.getSelection();
 		q.rightSpanSize = rightSpan.getSelection();
 		q.ngram = tltmNgram.getSelection();
 		
-		// re-write searchStr
-		if (q.searchAction == SearchAction.LIST && 
-			Concise.getData().SearchWorders != null && 
-			Concise.getData().SearchWorders.length > 0) 
-		{		
-			// rewrite searchWord
-			q.searchStr = "\"" + StringUtils.join(Concise.getData().SearchWorders, "\" OR \"") + "\"";
-		}
 		return q;
 	}
 	

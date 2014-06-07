@@ -71,7 +71,7 @@ public class CAToolBarGearToolItem extends ToolItem {
 			addSeparator();
 			addItem(Gear.DocumentViewer);
 			addItem(Gear.LemmaEditor);
-			addItem(Gear.SearchWorder);
+			//addItem(Gear.SearchWorder);
 			addItem(Gear.StopWorder);
 			
 			Rectangle rect = item.getBounds();

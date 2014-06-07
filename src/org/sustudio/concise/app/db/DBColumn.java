@@ -36,7 +36,7 @@ public class DBColumn {
 	
 	public static final DBColumn Gear			= new DBColumn("Gear",			SQLiteDataType.VARCHAR);
 	public static final DBColumn SearchString	= new DBColumn("SearchString", 	SQLiteDataType.VARCHAR);
-	public static final DBColumn SearchAction 	= new DBColumn("SearchAction", 	SQLiteDataType.VARCHAR);
+	//public static final DBColumn SearchAction 	= new DBColumn("SearchAction", 	SQLiteDataType.VARCHAR);
 	public static final DBColumn LeftSpanSize	= new DBColumn("LeftSpanSize", 	SQLiteDataType.INTEGER);
 	public static final DBColumn RightSpanSize	= new DBColumn("RightSpanSize", SQLiteDataType.INTEGER);
 	public static final DBColumn NGram			= new DBColumn("NGram", 		SQLiteDataType.INTEGER);

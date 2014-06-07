@@ -53,7 +53,6 @@ public enum Gear {
 	ConcordancePlotter(
 			"Concordance Plotter",
 			"/org/sustudio/concise/app/icon/circle-stack.png"),
-			//"/org/sustudio/concise/app/icon/77-ekg.png"),
 	
 	/** Gear for Keyword Lister */
 	KeywordLister(
@@ -84,11 +83,6 @@ public enum Gear {
 	DocumentViewer(
 			"Document Viewer",
 			"/org/sustudio/concise/app/icon/68-paperclip.png"),
-	
-	/** Gear for Search Worder */
-	SearchWorder(
-			"Search Worder",
-			"/org/sustudio/concise/app/icon/06-magnify.png"),
 	
 	/** Gear for Stop Worder */
 	StopWorder(
@@ -139,7 +133,7 @@ public enum Gear {
 			case KeywordLister:				controller = new KeywordLister();			break;
 			case LemmaEditor:				controller = new LemmaEditor();				break;
 			case ReferenceCorpusManager:	controller = new ReferenceCorpusManager();	break;
-			case SearchWorder:				controller = new SearchWorder();			break;
+			//case SearchWorder:				controller = new SearchWorder();			break;
 			case StopWorder:				controller = new StopWorder();				break;
 			case WordClouder:				controller = new WordClouder();				break;
 			case WordCluster:				controller = new WordCluster();				break;

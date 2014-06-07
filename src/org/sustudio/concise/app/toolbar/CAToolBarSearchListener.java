@@ -8,12 +8,15 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.dialog.Dialog;
-import org.sustudio.concise.app.enums.SearchAction;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.core.concordance.Conc;
 
-public class CAToolBarSearchActionListener extends SelectionAdapter {
+public class CAToolBarSearchListener extends SelectionAdapter {
+	
+	public void widgetSelected(SelectionEvent event) {
+		widgetDefaultSelected(event);
+	}
 	
 	public void widgetDefaultSelected(SelectionEvent event) {
 		// validating query first
@@ -24,8 +27,26 @@ public class CAToolBarSearchActionListener extends SelectionAdapter {
 	}
 	
 	private boolean validQuery(CAQuery query) {
-		if (query.searchAction == SearchAction.DEFAULT) return true;
-		else if (query.searchStr.isEmpty()) return false;
+		// 定義不需要檢查的條件
+		switch (query.getGear()) {
+		case DocumentViewer:	// 應該不會送出才是
+		case LemmaEditor:		// 應該不會送出才是
+		case StopWorder:		// 應該不會送出才是
+			throw new UnsupportedOperationException(query.getGear().label() + " 不應該檢查 CAQuery");
+		
+		case CorpusManager:
+		case KeywordLister:
+		case ReferenceCorpusManager:
+		case WordLister:
+			return true;
+		
+		case WordCluster:
+			if (query.ngram)
+				return true;
+		default:
+			break;
+		}
+		if (query.searchStr.isEmpty()) return false;
 		
 		try {
 			// use Conc class to test validation
