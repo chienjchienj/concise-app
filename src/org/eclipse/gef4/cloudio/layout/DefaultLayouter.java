@@ -10,11 +10,11 @@ package org.eclipse.gef4.cloudio.layout;
 
 import java.util.Random;
 
+import org.eclipse.gef4.cloudio.CloudWord;
 import org.eclipse.gef4.cloudio.util.CloudMatrix;
 import org.eclipse.gef4.cloudio.util.RectTree;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.sustudio.concise.app.gear.wordClouder.CloudWord;
 
 /**
  * 

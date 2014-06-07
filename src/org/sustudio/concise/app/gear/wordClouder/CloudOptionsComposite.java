@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.gef4.cloudio.CloudWord;
 import org.eclipse.gef4.cloudio.layout.DefaultLayouter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -31,7 +32,6 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.sustudio.concise.app.gear.wordClouder.CAFontScheme.FontChangedEvent;
 import org.sustudio.concise.app.gear.wordClouder.CAFontScheme.FontChangedListener;
-import org.sustudio.concise.app.gear.wordClouder.WordClouder.CloudLabelProvider;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.utils.ColorImage;
 import org.sustudio.concise.app.utils.LabelFont;
@@ -59,23 +59,20 @@ public class CloudOptionsComposite extends Composite {
 	 */
 	public CloudOptionsComposite(Composite parent, int style, WordClouder clouder) {
 		super(parent, style);
-		//Assert.isLegal(viewer.getLabelProvider() instanceof IEditableCloudLabelProvider, "Cloud label provider must be of type " + IEditableCloudLabelProvider.class);
-		//this.viewer = viewer;
 		this.clouder = clouder;
 		setLayout(new GridLayout());
 		setFont(LabelFont.getFont());
 		
-		//clouder.setMaxWords(CAPrefs.CLOUDER_MAX_WORDS);
 		clouder.getCloud().setMaxFontSize(CAPrefs.CLOUDER_MAX_FONT_SIZE);
 		clouder.getCloud().setMinFontSize(CAPrefs.CLOUDER_MIN_FONT_SIZE);
 		clouder.getCloud().setBoost(CAPrefs.CLOUDER_BOOST);
 		clouder.getCloud().setBoostFactor(CAPrefs.CLOUDER_BOOST_FACTOR);
-		((CloudLabelProvider) clouder.getLabelProvider()).setAngles(CAPrefs.CLOUDER_ANGLES.getAngles());
+		clouder.getLabelProvider().setAngles(CAPrefs.CLOUDER_ANGLES.getAngles());
 		clouder.getCloud().getLayouter().setOption(DefaultLayouter.X_AXIS_VARIATION, CAPrefs.CLOUDER_X_VARIATION);
 		clouder.getCloud().getLayouter().setOption(DefaultLayouter.Y_AXIS_VARIATION, CAPrefs.CLOUDER_Y_VARIATION);
-		((CloudLabelProvider) clouder.getLabelProvider()).setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
+		clouder.getLabelProvider().setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
 		getFonts();
-		((CloudLabelProvider) clouder.getLabelProvider()).setFonts(fonts);
+		clouder.getLabelProvider().setFonts(fonts);
 				
 		addLayoutButtons();
 		addColorButtons();
@@ -237,7 +234,7 @@ public class CloudOptionsComposite extends Composite {
 				CASpinner spinner = new CASpinner(clouder);
 				spinner.setMessage("Layouting word cloud...");
 				spinner.open();
-				clouder.reset(false);
+				clouder.getCloud().layoutCloud(false);
 				spinner.close();
 			}
 		});
@@ -252,8 +249,7 @@ public class CloudOptionsComposite extends Composite {
 				CASpinner spinner = new CASpinner(clouder);
 				spinner.setMessage("Layouting word cloud...");
 				spinner.open();
-				clouder.setInput(clouder.getInput());
-				clouder.reset(false);
+				clouder.reLayout();
 				spinner.close();
 			}
 			
@@ -276,7 +272,6 @@ public class CloudOptionsComposite extends Composite {
 			public void colorChanged(ColorChangedEvent event) {
 				
 				CAPrefs.CLOUDER_COLOR_SCHEME = event.getColorScheme();
-				if (clouder.getInput() == null) return;
 				CloudLabelProvider lp = (CloudLabelProvider) clouder.getLabelProvider();
 				lp.setColors(CAPrefs.CLOUDER_COLOR_SCHEME);
 				List<CloudWord> words = clouder.getCloud().getWords();
@@ -359,7 +354,6 @@ public class CloudOptionsComposite extends Composite {
 			@Override public void fontChanged(FontChangedEvent event) {
 				fonts = Arrays.asList(event.getFontsData());
 				updateCloudFontsPreference();
-				if (clouder.getInput() == null) return;
 				CloudLabelProvider lp = (CloudLabelProvider) clouder.getLabelProvider();
 				lp.setFonts(fonts);
 				List<CloudWord> words = clouder.getCloud().getWords();

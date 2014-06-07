@@ -53,7 +53,12 @@ public abstract class GearController extends Composite {
 		// something need to be initiated before loading GUI widgets
 		init();
 		
-		setLayout(new GridLayout(1, false));
+		GridLayout gl = new GridLayout(1, false);
+		gl.verticalSpacing = 2;
+		gl.marginHeight = 1;
+		gl.marginWidth = 1;
+		gl.marginBottom = 2;
+		setLayout(gl);
 		if (this instanceof IGearFilterable) {
 			loadFinder();
 		}

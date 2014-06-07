@@ -4,6 +4,7 @@ import javafx.embed.swt.FXCanvas;
 import javafx.embed.swt.SWTFXUtils;
 import javafx.scene.image.WritableImage;
 
+import org.eclipse.gef4.cloudio.WordCloud;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.FocusEvent;
@@ -99,6 +100,7 @@ public class CopyPasteHelper {
 			!(control instanceof Tree) &&
 			!(control instanceof List) &&
 			!(control instanceof StyledText) &&
+			!(control instanceof WordCloud) &&
 			!(control instanceof FXCanvas)) {
 			
 			return;
@@ -183,7 +185,9 @@ public class CopyPasteHelper {
 			selectAllEnabled = styledText.getText().length() > 0;
 		}
 		
-		else if (activeControl instanceof FXCanvas) {
+		else if (activeControl instanceof FXCanvas ||
+				 activeControl instanceof WordCloud)
+		{
 			copyEnabled = true;
 		}
 		
@@ -209,6 +213,10 @@ public class CopyPasteHelper {
 		}
 		else if (activeControl instanceof StyledText) {
 			((StyledText) activeControl).copy();
+		}
+		else if (activeControl instanceof WordCloud) {
+			ImageData imageData = ((WordCloud) activeControl).getImageData();
+			ClipboardHelper.copyImageToClipboard(imageData);
 		}
 		else if (activeControl instanceof FXCanvas) {
 			WritableImage writableImage = ((FXCanvas) activeControl).getScene().snapshot(null);

@@ -6,7 +6,7 @@
  * <p/>
  * Contributors: Stephan Schwiebert - initial API and implementation
  *******************************************************************************/
-package org.sustudio.concise.app.gear.wordClouder;
+package org.eclipse.gef4.cloudio;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,9 +58,10 @@ import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.gear.Gear;
 
 /**
- * 
  * @author sschwieb
  * 
+ * WordCloud - hacked from cloudio's TagCloud. <br>
+ * remove jface dependencies
  */
 public class WordCloud extends Canvas {
 

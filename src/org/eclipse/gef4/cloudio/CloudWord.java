@@ -6,7 +6,7 @@
 * <p/>
 * Contributors: Stephan Schwiebert - initial API and implementation
 *******************************************************************************/
-package org.sustudio.concise.app.gear.wordClouder;
+package org.eclipse.gef4.cloudio;
 
 import org.eclipse.gef4.cloudio.util.RectTree;
 import org.eclipse.swt.graphics.Color;
@@ -17,6 +17,9 @@ import org.eclipse.swt.graphics.Point;
  * Helper class which stores all data
  * required to render an element.
  * @author sschwieb
+ * 
+ * Renamed class to fit Concise App
+ * @author Kuan-ming Su
  *
  */
 public class CloudWord {

@@ -6,8 +6,6 @@ import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.dialog.Dialog;
-import org.sustudio.concise.app.gear.Gear;
-import org.sustudio.concise.app.gear.wordClouder.WordClouder;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.core.Workspace;
@@ -61,12 +59,4 @@ public class WordListerThread extends ConciseThread {
 		}
 	}
 	
-	protected void loadData() {
-		if (gear == Gear.WordClouder) {
-			((WordClouder) gear.getController(Concise.getCurrentWorkspace())).setCloudData();
-		}
-		else {
-			super.loadData();
-		}
-	}
 }
