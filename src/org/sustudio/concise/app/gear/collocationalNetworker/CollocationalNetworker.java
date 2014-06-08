@@ -130,6 +130,7 @@ public class CollocationalNetworker
 				case SWT.BS:
 				case SWT.DEL:
 					dataPanel.deleteNodes();
+					networkGraph.clearSelectionRectangle();
 					break;
 				}
 			}

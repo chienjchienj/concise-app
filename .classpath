@@ -6,18 +6,18 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.draw2d_3.9.0.201308190730.jar" sourcepath="/Applications/eclipse/plugins"/>
-	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.zest.core_0.1.0.201405310204.jar" sourcepath="/Applications/eclipse/plugins/org.eclipse.gef4.zest.core.source_0.1.0.201405230208.jar"/>
-	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.layout_0.1.0.201405310204.jar"/>
+	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.draw2d_3.9.0.201308190730.jar" sourcepath="/Applications/eclipse/plugins/org.eclipse.draw2d.source_3.9.0.201308190730.jar"/>
+	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.zest.core_0.1.0.201406070204.jar" sourcepath="/Applications/eclipse/plugins/org.eclipse.gef4.zest.core.source_0.1.0.201406070204.jar"/>
+	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.layout_0.1.0.201406070204.jar"/>
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.gallery_0.6.0.201405151353.jar"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.geometry_0.1.0.201405310204.jar"/>
+	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.geometry_0.1.0.201406070204.jar"/>
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.pshelf_1.0.0.201405151353.jar" sourcepath="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.pshelf.source_1.0.0.201405151353.jar"/>
-	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.graph_0.1.0.201405310204.jar"/>
+	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.graph_0.1.0.201406070204.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

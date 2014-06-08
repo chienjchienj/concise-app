@@ -8,13 +8,16 @@ import org.eclipse.draw2d.FigureUtilities;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.RectangleFigure;
 import org.eclipse.draw2d.SWTGraphics;
-import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.draw2d.geometry.PrecisionPoint;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphItem;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.GraphWidget;
 import org.eclipse.gef4.zest.core.widgets.LayoutFilter;
+import org.eclipse.gef4.zest.core.widgets.ZestStyles;
+import org.eclipse.gef4.zest.core.widgets.gestures.ZoomGestureListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -24,6 +27,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -40,15 +44,17 @@ import org.eclipse.wb.swt.SWTResourceManager;
  */
 public class NetworkGraph extends GraphWidget {
 	
+	private final Cursor moveCursor = new Cursor(getDisplay(), SWT.CURSOR_CROSS);
+	
 	private Color labelColor = getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY);
 	private boolean hideNonSelectedLabel = true;
 	private boolean mouseDown = false;
-	private Point mouseDownPoint;
+	private PrecisionPoint mouseDownPoint;
 	
 	private CAGraphNode hoveredNode = null;
 	
 	private final List<CAGraphNode> selections = new ArrayList<CAGraphNode>();
-	private RectangleFigure selectionArea;
+	private RectangleFigure selectionRect;
 	
 	
 	/**
@@ -57,7 +63,10 @@ public class NetworkGraph extends GraphWidget {
 	 * @param style			Normally, SWT.NONE
 	 */
 	public NetworkGraph(Composite viewer, int style) {
-		super(viewer, style);
+		super(viewer, style | ZestStyles.GESTURES_DISABLED);
+		
+		// add gesture listener (ignore rotate gesture)
+		addGestureListener(new ZoomGestureListener());
 		
 		addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
@@ -70,6 +79,7 @@ public class NetworkGraph extends GraphWidget {
 				switch (event.keyCode) {
 				case SWT.ESC:
 					selections.clear();
+					clearSelectionRectangle();
 					break;
 				}
 			}
@@ -84,19 +94,27 @@ public class NetworkGraph extends GraphWidget {
 				hoveredNode = null;
 				
 				// selection area
-				if (selectionArea != null) {
+				if (selectionRect != null && mouseDown) {
 					unhighlightAllNodes();
 					unhighlightAllConnections();
 					fadeoutAllNodes();
-					Rectangle rect = selectionArea.getBounds();
-					rect.x = Math.min(e.x, mouseDownPoint.x);
-					rect.y = Math.min(e.y, mouseDownPoint.y);
-					rect.width = Math.abs(e.x - mouseDownPoint.x);
-					rect.height = Math.abs(e.y - mouseDownPoint.y);
-					selectionArea.setBounds(rect);
+					
+					// 轉換坐標
+					Rectangle rootBounds = getRootLayer().getBounds();
+					getRootLayer().translateToAbsolute(rootBounds);
+					double zoom = getZoomManager().getZoom();
+					double x = (e.x - rootBounds.x) / zoom;
+					double y = (e.y - rootBounds.y) / zoom;
+					
+					Rectangle rect = selectionRect.getBounds();
+					rect.x = (int) Math.min(x, mouseDownPoint.x);
+					rect.y = (int) Math.min(y, mouseDownPoint.y);
+					rect.width = (int) Math.abs(x - mouseDownPoint.x);
+					rect.height = (int) Math.abs(y - mouseDownPoint.y);
+					selectionRect.setBounds(rect);
 					
 					for (GraphNode node : getNodes()) {
-						if (node.getFigure().getBounds().intersects(selectionArea.getBounds())) {
+						if (node.getFigure().getBounds().intersects(selectionRect.getBounds())) {
 							node.highlight();
 							if (hideNonSelectedLabel) {
 								((CAGraphNode) node).showLabel();
@@ -137,7 +155,7 @@ public class NetworkGraph extends GraphWidget {
 					
 					// high light node and its connected nodes
 					hightlightNodeAndItsConnectedNodes(hoveredNode);
-				}		
+				}
 			}
 		});
 		
@@ -145,14 +163,23 @@ public class NetworkGraph extends GraphWidget {
 		addMouseListener(new MouseAdapter() {
 			public void mouseDown(MouseEvent e) {
 				mouseDown = true;
-				mouseDownPoint = new Point(e.x, e.y);
+				
+				// translate mouse point to root coordination
+				double zoom = getZoomManager().getZoom();
+				Rectangle rootBounds = getRootLayer().getBounds();
+				getRootLayer().translateToAbsolute(rootBounds);
+				mouseDownPoint = new PrecisionPoint(
+										(e.x - rootBounds.x) / zoom,
+										(e.y - rootBounds.y) / zoom);
+				
 				if (hoveredNode == null) {
-					selectionArea = new RectangleFigure(); 
-					selectionArea.setLocation(new Point(e.x, e.y));
-					selectionArea.setSize(1, 1);
-					selectionArea.setBackgroundColor(DARK_BLUE);
-					selectionArea.setAlpha(64);
-					getRootLayer().add(selectionArea);
+					setCursor(moveCursor);
+					clearSelectionRectangle();
+					selectionRect = new RectangleFigure();
+					selectionRect.setLocation(mouseDownPoint);
+					selectionRect.setBackgroundColor(DARK_BLUE);
+					selectionRect.setAlpha(64);
+					getRootLayer().add(selectionRect);
 				}
 			}
 			
@@ -160,16 +187,20 @@ public class NetworkGraph extends GraphWidget {
 				mouseDown = false;
 				mouseDownPoint = null;
 				selections.clear();
-				if (selectionArea != null) {
+				setCursor(null);
+				if (selectionRect != null) {
 					for (GraphNode node : getNodes()) {
-						if (node.getFigure().getBounds().intersects(selectionArea.getBounds())) {
+						if (node.getFigure().getBounds().intersects(selectionRect.getBounds())) {
 							selections.add((CAGraphNode) node);							
 						}
 					}
 					select(selections);
 					
-					selectionArea.getParent().remove(selectionArea);
-					selectionArea = null;
+					selectionRect.setAlpha(selectionRect.getAlpha() / 3);
+					Dimension size = selectionRect.getSize();
+					if (size.width == 0 && size.height == 0) {
+						clearSelectionRectangle();
+					}
 				}
 			}			
 		});
@@ -225,6 +256,17 @@ public class NetworkGraph extends GraphWidget {
 				}
 			}
 			notifyListeners(SWT.Selection, new Event());
+		}
+	}
+	
+	public void clearSelectionRectangle() {
+		if (selectionRect != null) {
+			selectionRect.getParent().remove(selectionRect);
+			selectionRect = null;
+		}
+		if (selections.isEmpty()) {
+			unhighlightAllNodes();
+			unhighlightAllConnections();
 		}
 	}
 	

@@ -130,17 +130,12 @@ public class ConciseApp extends Shell {
 		gearBoxView = new GearBoxView(boxSash, SWT.BORDER | SWT.CLOSE);
 		toolBoxView = new ToolBoxView(boxSash, SWT.BORDER | SWT.CLOSE);
 		
+		// initialize gears (gears to open)
+		initGears();
+		
 		boxSash.setWeights(new int[] { (boxSash.getShell().getClientArea().width - boxSash.getSashWidth() - 280), 280});
 		boxSash.setMaximizedControl(gearBoxView);
 		
-	}
-	
-	
-	public void open() {
-		super.open();
-		
-		// initialize gears (gears to open)
-		initGears();
 	}
 	
 	
