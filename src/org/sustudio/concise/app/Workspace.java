@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -15,10 +16,13 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.concordancePlotter.ConcPlotData;
+import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.core.cluster.Cluster;
 import org.sustudio.concise.core.collocation.Collocate;
 import org.sustudio.concise.core.concordance.ConcLine;
@@ -75,6 +79,29 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 		// write system PID to lock file
 		FileUtils.write(lock, ManagementFactory.getRuntimeMXBean().getName().replaceAll("^(\\d+)@.+$", "$1"));		
 		lock.deleteOnExit();
+	}
+	
+	public Directory getTempDirectory() {
+		// use RAM
+		if (CAPrefs.TEMPORARY_FOLDER == null || 
+			(
+				!CAPrefs.TEMPORARY_FOLDER.equals(getFile()) && 
+				!CAPrefs.TEMPORARY_FOLDER.equals(new File(System.getProperty("java.io.tmpdir")))
+			)
+		) {
+			CAPrefs.TEMPORARY_FOLDER = null;
+			return super.getTempDirectory();
+		}
+		
+		try {
+			Path tmpPath = Files.createTempDirectory(CAPrefs.TEMPORARY_FOLDER.toPath(), "concise-");
+			tmpPath.toFile().deleteOnExit();	// just in case... 
+			return FSDirectory.open(tmpPath.toFile());
+			
+		} catch (IOException e) {
+			logError(null, e);
+			return super.getTempDirectory();
+		}
 	}
 	
 	

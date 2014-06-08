@@ -11,12 +11,12 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
-import org.sustudio.concise.app.enums.PrefsEnum;
 import org.sustudio.concise.app.preferences.CAPrefsUtils;
 import org.sustudio.concise.app.resources.CABundle;
 import org.sustudio.concise.app.thread.CAReTokenizeThread;
@@ -24,15 +24,80 @@ import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Platform;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 public class CAPreferencesDialog extends Shell {
 
+	public enum TAB {
+		
+		/** General Preferences */
+		GENERAL(CABundle.get("preferences.general"), "/org/sustudio/concise/app/icon/81-dashboard-20x20.png"), 
+		
+		/** File Preferences */
+		FILE(CABundle.get("preferences.file"), "/org/sustudio/concise/app/icon/96-book-20x20.png"), 
+		
+		///** Tag Preferences */
+		//TAG("Tag", "/org/sustudio/concise/app/icon/172-pricetag-20x20.png"), 
+		
+		///** XML Preferences */
+		//XML("XML", "/org/sustudio/concise/app/icon/149-windmill-20x20.png"), 
+		
+		///** Wild card Preferences */
+		//WILDCARD("Wild Card", "/org/sustudio/concise/app/icon/198-card-spades-20x20.png"), 
+		
+		/** Token Preferences */
+		TOKEN(CABundle.get("preferences.token"), "/org/sustudio/concise/app/icon/117-todo-20x20.png"),
+		
+		///** Font Preferences */
+		//FONT(CABundle.get("preferences.font"), "/org/sustudio/concise/app/icon/113-navigation-20x20.png"),
+		
+		/** System Preferences */
+		SYSTEM("System", "/org/sustudio/concise/app/icon/157-wrench-20x20.png"),
+		;
+		
+		private final String label;
+		private final Image image;
+		private Control control;
+		private ToolItem item;
+				
+		TAB(String label, String imageClasspath) {
+			this.label = label;
+			image = SWTResourceManager.getImage(getClass(), imageClasspath);
+		}
+		
+		public String getLabel() {
+			return label;
+		}
+		
+		public void setControl(Control control) {
+			this.control = control;
+		}
+		
+		public Control getControl() {
+			return control;
+		}
+		
+		public Image getImage() {
+			return image;
+		}
+		
+		public void setToolItem(ToolItem item) {
+			this.item = item;
+		}
+		
+		public ToolItem getToolItem() {
+			return item;
+		}
+		
+	}
+	
 	private static final int minWidth = 400;
 	
 	private final Composite composite;
 	private final StackLayout layout;
-	private final PrefsEnum defaultPrefTab = PrefsEnum.GENERAL;
+	private final TAB defaultPrefTab = TAB.GENERAL;
 	
 	public CAPreferencesDialog() {
 		super(Concise.getActiveApp(), SWT.DIALOG_TRIM | SWT.RESIZE);
@@ -51,19 +116,19 @@ public class CAPreferencesDialog extends Shell {
 			toolBar = new ToolBar(this, SWT.FLAT);
 		toolBar.setLayoutData(gd);
 		
-		for (final PrefsEnum pref : PrefsEnum.values()) {
+		for (final TAB tab : TAB.values()) {
 			final ToolItem item = new ToolItem(toolBar, SWT.RADIO);
-			item.setImage(pref.getImage());
+			item.setImage(tab.getImage());
 			item.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					if (item.getSelection()) {
-						openWidget(pref);
+						openWidget(tab);
 					}
 				}
 			});
-			item.setText(pref.getLabel());
-			item.setSelection(pref == defaultPrefTab);
-			pref.setToolItem(item);
+			item.setText(tab.getLabel());
+			item.setSelection(tab == defaultPrefTab);
+			tab.setToolItem(item);
 		}
 		
 		composite = new Composite(this, SWT.NONE);
@@ -72,9 +137,10 @@ public class CAPreferencesDialog extends Shell {
 		composite.setLayout(layout);
 		
 		// initial
-		PrefsEnum.GENERAL.setControl(new CADlgPrefGeneral(composite, SWT.NONE));
-		PrefsEnum.FILE.setControl(new CADlgPrefFile(composite, SWT.NONE));
-		PrefsEnum.TOKEN.setControl(new CADlgPrefToken(composite, SWT.NONE));
+		TAB.GENERAL.setControl(	new CADlgPrefGeneral(composite, SWT.NONE));
+		TAB.FILE.setControl(	new CADlgPrefFile(composite, SWT.NONE));
+		TAB.TOKEN.setControl(	new CADlgPrefToken(composite, SWT.NONE));
+		TAB.SYSTEM.setControl(	new CADlgPrefSystem(composite, SWT.NONE));
 		
 		openWidget(defaultPrefTab);
 		
@@ -108,11 +174,11 @@ public class CAPreferencesDialog extends Shell {
 		});
 	}
 	
-	private void openWidget(final PrefsEnum pref) {
+	private void openWidget(final TAB tab) {
 		boolean animationRequired = layout.topControl != null && 
-									!layout.topControl.equals(pref.getControl());
+									!layout.topControl.equals(tab.getControl());
 		
-		layout.topControl = pref.getControl();
+		layout.topControl = tab.getControl();
 		composite.layout();
 		
 		if (animationRequired) {

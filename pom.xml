@@ -16,6 +16,9 @@
       </plugin>
     </plugins>
   </build>
+  <properties>
+  	<concise-version>0.3.7</concise-version>
+  </properties>
   <dependencies>
   	<dependency>
   		<groupId>org.xerial</groupId>
@@ -30,7 +33,7 @@
   	<dependency>
   		<groupId>org.sustudio</groupId>
   		<artifactId>concise-core</artifactId>
-  		<version>0.3.7</version>
+  		<version>${concise-version}</version>
   	</dependency>
   	<dependency>
       	<groupId>opal</groupId>  

@@ -1,6 +1,7 @@
 package org.sustudio.concise.app.preferences;
 
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Locale;
@@ -37,6 +38,14 @@ public class CAPrefs extends CCPrefs implements Serializable {
 	
 	/** 顯示詞性（part-of-speech）標籤 */
 	public static boolean SHOW_PART_OF_SPEECH = false;
+	
+	
+	///////////////////////////////////////////////////////////////////////
+	// System Settings
+	///////////////////////////////////////////////////////////////////////
+	
+	/** 預設的暫存資料夾 */
+	public static File TEMPORARY_FOLDER = null;
 	
 	
 	///////////////////////////////////////////////////////////////////////
@@ -130,7 +139,6 @@ public class CAPrefs extends CCPrefs implements Serializable {
 	public static RGB CLOUDER_SELECTION_RGB = new RGB(255, 0, 0);
 	
 	public static String[] CLOUDER_FONTS;
-	//public static FontData[] CLOUDER_FONTS;
 	
 	///////////////////////////////////////////////////////////////////////
 	// Collocational Network Settings
