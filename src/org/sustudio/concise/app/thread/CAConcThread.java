@@ -52,7 +52,6 @@ public class CAConcThread extends ConciseThread {
 			// create new table and prepare to write data
 			SQLiteDB.createTableIfNotExists(CATable.Concordancer);
 			PreparedStatement ps = SQLiteDB.prepareStatement(CATable.Concordancer);
-			
 			int lineCount = 0;
 			for (ScoreDoc scoreDoc :  conc.hitDocs()) 
 			{

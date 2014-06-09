@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.sustudio.concise.app.db.CADataUtils;
 import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
+import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
@@ -120,7 +121,34 @@ public class KeywordLister
 	}	
 	
 	public void loadData() {
-		sort();
+		final CASpinner spinner = new CASpinner(this);
+		spinner.open();
+		final DBColumn sortColumn = (DBColumn) table.getSortColumn().getData(_DB_COLUMN);
+		final int sortDirection = table.getSortDirection();
+		Thread thread = new Thread() {
+			public void run() {
+				try 
+				{
+					keywordsCount = CADataUtils.resetKeywordList(
+							sortColumn,
+							sortDirection,
+							getFinder().whereSyntax());
+					positiveKeywordsCount = workspace.DATA.keywordList.size();
+					
+				} catch (Exception e) {
+					CAErrorMessageDialog.open(getGear(), e);
+				} finally {
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							resetKeywordList();
+							spinner.close();
+						}
+					});
+				}
+			}
+		};
+		thread.setDaemon(true);
+		thread.start();
 	}
 	
 	protected void unloadData() {
@@ -160,40 +188,14 @@ public class KeywordLister
 					Formats.getDecimalFormat(p) };
 			
 		} catch (Exception e) {
-			CAErrorMessageDialog.open(getGear(), e);
+			workspace.logError(gear, e);
+			Dialog.showException(e);
 		}
 		return null;
 	}
 	
 	public void sort() {
-		final CASpinner spinner = new CASpinner(this);
-		spinner.open();
-		final DBColumn sortColumn = (DBColumn) table.getSortColumn().getData(_DB_COLUMN);
-		final int sortDirection = table.getSortDirection();
-		Thread thread = new Thread() {
-			public void run() {
-				try 
-				{
-					keywordsCount = CADataUtils.resetKeywordList(
-							sortColumn,
-							sortDirection,
-							getFinder().whereSyntax());
-					positiveKeywordsCount = workspace.DATA.keywordList.size();
-					
-				} catch (Exception e) {
-					CAErrorMessageDialog.open(getGear(), e);
-				} finally {
-					getDisplay().asyncExec(new Runnable() {
-						public void run() {
-							resetKeywordList();
-							spinner.close();
-						}
-					});
-				}
-			}
-		};
-		thread.setDaemon(true);
-		thread.start();
+		loadData();
 	}
 	
 	private void resetKeywordList() {

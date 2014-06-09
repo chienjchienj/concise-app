@@ -171,31 +171,51 @@ public class ScatterPlotter extends GearController {
 	}
 	
 	public void loadData() {
-		CASpinner spinner = new CASpinner(this);
+		final CASpinner spinner = new CASpinner(this);
 		spinner.open();
-		try {
-			if (pca == null) {
-				pca = new ConcisePCACorr(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
+		Thread thread = new Thread() {
+			public void run() {
+				try {
+					if (pca == null) {
+						pca = new ConcisePCACorr(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
+					}
+					
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							NumberStringConverter fmt = new NumberStringConverter("#.##%");
+							scatterChart.getXAxis().setLabel("PC1 (" + fmt.toString(pca.getExplainedByDimension(1)) + ")");
+							scatterChart.getYAxis().setLabel("PC2 (" + fmt.toString(pca.getExplainedByDimension(2)) + ")");
+						}
+					});
+					
+					// add existing words
+					SQLiteDB.createTableIfNotExists(CATable.ScatterPlotter);
+					String sql = "SELECT * FROM " + CATable.ScatterPlotter.name();
+					ResultSet rs = SQLiteDB.executeQuery(sql);
+					while (rs.next()) {
+						final String word = rs.getString(DBColumn.Word.columnName());
+						getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								addWord(word);
+							}
+						});
+					}
+					rs.close();
+					
+				} catch (Exception e) {
+					workspace.logError(gear, e);
+					Dialog.showException(e);
+				}
+				
+				getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						spinner.close();
+					}
+				});
 			}
-			
-			NumberStringConverter fmt = new NumberStringConverter("#.##%");
-			scatterChart.getXAxis().setLabel("PC1 (" + fmt.toString(pca.getExplainedByDimension(1)) + ")");
-			scatterChart.getYAxis().setLabel("PC2 (" + fmt.toString(pca.getExplainedByDimension(2)) + ")");
-			
-			// add existing words
-			SQLiteDB.createTableIfNotExists(CATable.ScatterPlotter);
-			String sql = "SELECT * FROM " + CATable.ScatterPlotter.name();
-			ResultSet rs = SQLiteDB.executeQuery(sql);
-			while (rs.next()) {
-				addWord(rs.getString(DBColumn.Word.columnName()));
-			}
-			rs.close();
-			
-		} catch (Exception e) {
-			workspace.logError(gear, e);
-			Dialog.showException(e);
-		}
-		spinner.close();
+		};
+		thread.setDaemon(true);
+		thread.start();
 		super.loadData();
 	}
 	
@@ -216,7 +236,7 @@ public class ScatterPlotter extends GearController {
 		}
 	}
 	
-	private void addWord(String strWord) throws Exception {
+	private void addWord(String strWord) {
 		
 		// check if the word already exists
 		for (Series<Number, Number> series : scatterChart.getData()) {
@@ -317,6 +337,7 @@ public class ScatterPlotter extends GearController {
 					
 					Concise.getCurrentWorkspace().logInfo(query.toString());
 					CAQueryUtils.logQuery(query);
+					
 					// TODO lemma translation and stop words
 					Conc conc = new Conc(workspace, query.searchStr, CAPrefs.SHOW_PART_OF_SPEECH);
 					ArrayList<String> words = new ArrayList<String>();

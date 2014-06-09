@@ -75,7 +75,7 @@ public class WordTrender extends GearController {
 		
 		// creating the chart
 		lineChart = new LineChart<String, Number>(xAxis, yAxis);
-		lineChart.setLegendSide(Side.TOP);
+		lineChart.setLegendSide(Side.RIGHT);
 		
 		// get legend
 		final Legend legend = (Legend) lineChart.lookup(".chart-legend");

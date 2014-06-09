@@ -28,7 +28,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -53,7 +52,6 @@ import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.utils.Formats;
-import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.wordlister.Lemma;
 import org.sustudio.concise.core.wordlister.LemmaList;
 import org.sustudio.concise.core.wordlister.Word;
@@ -75,17 +73,6 @@ public class LemmaEditor extends GearController {
 	
 	@Override
 	protected Control createControl() {
-		
-		final Button lemmaCheckBox = new Button(this, SWT.CHECK);
-		lemmaCheckBox.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 3, 1));
-		lemmaCheckBox.setText("Enable Lemma");
-		lemmaCheckBox.setSelection(CCPrefs.LEMMA_ENABLED);
-		lemmaCheckBox.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				CCPrefs.LEMMA_ENABLED = !CCPrefs.LEMMA_ENABLED;
-				((Button) event.widget).setSelection(CCPrefs.LEMMA_ENABLED);
-			}
-		});
 		
 		// add Toolbar
 		final ToolBar toolBar = new ToolBar(this, SWT.FLAT | SWT.RIGHT | SWT.SHADOW_OUT);

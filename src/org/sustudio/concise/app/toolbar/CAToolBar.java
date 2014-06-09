@@ -137,10 +137,51 @@ public class CAToolBar {
 			}
 		});
 		
+		
 		final ToolItem tltmSep = new ToolItem(toolBar, SWT.SEPARATOR);
 		tltmSep.setWidth(SWT.SEPARATOR_FILL);
 		if (!Platform.isMac())
 			tltmSep.setControl(new Label(toolBar, SWT.NONE));
+		
+		final ToolItem tltmStop = new ToolItem(toolBar, SWT.CHECK);
+		tltmStop.setImage(SWTResourceManager.getImage(
+					CAToolBar.class, 
+					CAPrefs.STOP_WORDS_ENABLED ? 
+						"/org/sustudio/concise/app/icon/21-skull-20x20-hot.png" :
+						"/org/sustudio/concise/app/icon/21-skull-20x20.png"));
+		tltmStop.setText("Stop");
+		tltmStop.setToolTipText("Enable/Disable Stop Words");
+		tltmStop.setSelection(CAPrefs.STOP_WORDS_ENABLED);
+		tltmStop.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				CAPrefs.STOP_WORDS_ENABLED = tltmStop.getSelection();
+				tltmStop.setImage(SWTResourceManager.getImage(
+						CAToolBar.class, 
+						CAPrefs.STOP_WORDS_ENABLED ? 
+							"/org/sustudio/concise/app/icon/21-skull-20x20-hot.png" :
+							"/org/sustudio/concise/app/icon/21-skull-20x20.png"));
+			}
+		});
+		
+		final ToolItem tltmLemma = new ToolItem(toolBar, SWT.CHECK);
+		tltmLemma.setImage(SWTResourceManager.getImage(
+				CAToolBar.class, 
+				CAPrefs.LEMMA_ENABLED ? 
+					"/org/sustudio/concise/app/icon/123-id-card-20x20-hot.png" :
+					"/org/sustudio/concise/app/icon/123-id-card-20x20.png"));
+		tltmLemma.setText("Lemma");
+		tltmLemma.setToolTipText("Enable/Disable Lemma");
+		tltmLemma.setSelection(CAPrefs.LEMMA_ENABLED);
+		tltmLemma.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent event) {
+				CAPrefs.LEMMA_ENABLED = tltmLemma.getSelection();
+				tltmLemma.setImage(SWTResourceManager.getImage(
+						CAToolBar.class, 
+						CAPrefs.LEMMA_ENABLED ? 
+							"/org/sustudio/concise/app/icon/123-id-card-20x20-hot.png" :
+							"/org/sustudio/concise/app/icon/123-id-card-20x20.png"));
+			}
+		});
 		
 		new CAToolBarGearToolItem(toolBar);
 		

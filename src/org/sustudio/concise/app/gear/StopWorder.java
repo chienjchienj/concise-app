@@ -24,7 +24,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -95,17 +94,6 @@ public class StopWorder extends GearController {
 		tltmOptions.setToolTipText("Options");
 		tltmOptions.setImage(SWTResourceManager.getImage(StopWorder.class, "/org/sustudio/concise/app/icon/19-gear.png"));
 		setDropDownMenu(tltmOptions);
-		
-		Button stopWordCheckBox = new Button(comp, SWT.CHECK);
-		stopWordCheckBox.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 3, 1));
-		stopWordCheckBox.setText("Enable Stop Words");
-		stopWordCheckBox.setSelection(CCPrefs.STOP_WORDS_ENABLED);
-		stopWordCheckBox.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				CCPrefs.STOP_WORDS_ENABLED = !CCPrefs.STOP_WORDS_ENABLED;
-				((Button) event.widget).setSelection(CCPrefs.STOP_WORDS_ENABLED);
-			}
-		});
 		
 		Group grpWords = new Group(comp, SWT.NONE);
 		grpWords.setLayout(new GridLayout(1, false));

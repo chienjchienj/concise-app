@@ -294,7 +294,7 @@ public class WordLister
 		item.setText(new String[] {
 				word.word,
 				Formats.getNumberFormat(word.totalTermFreq),
-				word.docFreq == 0 ? "N/A" : Formats.getNumberFormat(word.docFreq) });
+				Formats.getNumberFormat(word.docFreq) });
 			item.setData(CCWORD, word);
 	}
 	
@@ -359,7 +359,7 @@ public class WordLister
 			//String.valueOf(index + 1),
 			word.word,
 			Formats.getNumberFormat(word.totalTermFreq),
-			word.docFreq == 0 ? "N/A" : Formats.getNumberFormat(word.docFreq),
+			Formats.getNumberFormat(word.docFreq),
 			word.getChildrenToString() };
 	}
 
