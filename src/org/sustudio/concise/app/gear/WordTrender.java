@@ -1,38 +1,60 @@
 package org.sustudio.concise.app.gear;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.embed.swt.FXCanvas;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.util.Callback;
+import javafx.util.StringConverter;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.analysis.Analyzer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Control;
 import org.sustudio.concise.app.Concise;
@@ -46,35 +68,75 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.Workspace.INDEX;
+import org.sustudio.concise.core.collocation.ConciseTokenAnalyzer;
 import org.sustudio.concise.core.concordance.Conc;
 import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.corpus.DocumentIterator;
+import org.sustudio.concise.core.highlighter.DocumentHighlighter;
 import org.sustudio.concise.core.wordlister.WordUtils;
 
 import com.sun.javafx.charts.Legend;
 
 public class WordTrender extends GearController {
 
-	private final ArrayList<ConciseDocument> docs = new ArrayList<ConciseDocument>();
-	private LineChart<String, Number> lineChart;
+	protected static final ConciseDocument ALL_DOCUMENTS = new ConciseDocument();
+	protected static int SEGMENTS = 100;
+	
+	private ArrayList<ConciseDocument> docs;
+	private LineChart<Number, Number> lineChart;
+	private ConciseDocument doc;
+	private boolean collapse = false;
 	
 	public WordTrender() {
 		super(CABox.GearBox, Gear.WordTrender);
+	}
+	
+	protected void init() {
+		// a dummy ConciseDocument represents All Documents
+		doc = ALL_DOCUMENTS;
+		ALL_DOCUMENTS.title = "All Documents";
+		ALL_DOCUMENTS.docID = -1;
+		
+		try {
+			if (docs == null)
+				docs = new ArrayList<ConciseDocument>();
+			if (docs != null &&
+				docs.size() != workspace.getIndexReader(INDEX.DOCUMENT).numDocs()) 
+			{
+				docs.clear();
+				for (ConciseDocument d : new DocumentIterator(workspace)) {
+					docs.add(d);
+				}
+				Collections.sort(docs, new Comparator<ConciseDocument>() {
+					public int compare(ConciseDocument o1, ConciseDocument o2) {
+						return o1.title.compareTo(o2.title);
+					}
+				});
+			}
+		} catch (Exception e) {
+			workspace.logError(gear, e);
+			Dialog.showException(e);
+		}
 	}
 	
 	@Override
 	protected Control createControl() {
 		
 		final FXCanvas fxCanvas = new FXCanvas(this, SWT.NONE);
-		final CategoryAxis xAxis = new CategoryAxis();
+		
+		BorderPane border = new BorderPane();
+		border.setTop(getLineChartToolBar());
+		
+		final NumberAxis xAxis = new NumberAxis();
 		//xAxis.setLabel("Document");
 		final NumberAxis yAxis = new NumberAxis();
 		yAxis.setLabel("Frequency");
 		yAxis.setTickUnit(1);
 		
 		// creating the chart
-		lineChart = new LineChart<String, Number>(xAxis, yAxis);
+		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
 		lineChart.setLegendSide(Side.RIGHT);
 		
 		// get legend
@@ -136,46 +198,149 @@ public class WordTrender extends GearController {
 			}
 		});
 		
-		fxCanvas.setScene(new Scene(lineChart));
+		border.setCenter(lineChart);
+		fxCanvas.setScene(new Scene(border));
 		return fxCanvas;
 	}
 	
+	/**
+	 * LineChart 上方的工具列
+	 * @return LineChart 上方的工具列
+	 */
+	private Node getLineChartToolBar() {
+		HBox hbox = new HBox();
+		hbox.setPadding(new Insets(2, 15, 2, 15));
+		hbox.setSpacing(10);
+		
+		ObservableList<ConciseDocument> docList = FXCollections.observableArrayList();
+		// add a fake ConciseDocument to represent ALL Documents
+		docList.add(ALL_DOCUMENTS);
+		for (ConciseDocument d : docs) {
+			docList.add(d);
+		}
+		
+		ComboBox<ConciseDocument> cmbDoc = new ComboBox<ConciseDocument>(docList);
+		cmbDoc.setCellFactory(new Callback<ListView<ConciseDocument>, ListCell<ConciseDocument>>() {
+			@Override public ListCell<ConciseDocument> call(ListView<ConciseDocument> param) {
+				return new ListCell<ConciseDocument>() {
+					protected void updateItem(ConciseDocument cd, boolean empty) {
+						super.updateItem(cd, empty);
+						if (cd != null && !empty) {
+							setContentDisplay(ContentDisplay.TEXT_ONLY);
+							setText(cd.title);
+						}
+					}
+				};
+			}
+		});
+		cmbDoc.setConverter(new StringConverter<ConciseDocument>() {
+			@Override public String toString(ConciseDocument cd) {
+				return cd.title;
+			}
+
+			@Override public ConciseDocument fromString(String string) {
+				return null;	// 不允許新增
+			}
+			
+		});
+		cmbDoc.setValue(doc);
+		cmbDoc.valueProperty().addListener(new ChangeListener<ConciseDocument>() {
+			@Override public void changed(
+					ObservableValue<? extends ConciseDocument> observable,
+					ConciseDocument oldDoc, ConciseDocument newDoc) {
+				doc = newDoc;
+				loadDocument(doc);
+			}
+			
+		});
+		cmbDoc.setMaxWidth(Double.MAX_VALUE);
+		
+		CheckBox cbCollapse = new CheckBox("Collapse");
+		cbCollapse.setPrefWidth(200);
+		cbCollapse.setSelected(collapse);
+		cbCollapse.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override public void changed(ObservableValue<? extends Boolean> ov,
+					Boolean old_val, Boolean new_val) 
+			{
+				collapse = new_val;
+				loadDocument(doc);
+			}
+			
+		});
+		
+		Button btnClear = new Button("Clear");
+		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				try {
+					SQLiteDB.dropTableIfExists(CATable.WordTrender);
+				} catch (SQLException | IOException e) {
+					workspace.logError(gear, e);
+					Dialog.showException(e);
+				} finally {
+					lineChart.getData().clear();
+				}
+			}			
+		});
+		btnClear.setPrefWidth(150);
+		hbox.setAlignment(Pos.CENTER);
+		hbox.getChildren().addAll(cmbDoc, cbCollapse, btnClear);
+		
+		return hbox;
+	}
+	
 	public Control[] getZoomableControls() {
+		// TODO add zoom support
 		return null;
 	}
 	
 	public void loadData() {
+		loadDocument(doc);
+		super.loadData();
+	}
+	
+	/**
+	 * 載入特定文件的 word trend
+	 * @param cd
+	 */
+	public void loadDocument(ConciseDocument cd) {
 		CASpinner spinner = new CASpinner(this);
 		spinner.open();
 		try {
-			if (docs.size() != workspace.getIndexReader(INDEX.DOCUMENT).numDocs()) {
-				docs.clear();
-				for (ConciseDocument d : new DocumentIterator(workspace)) {
-					docs.add(d);
-					//d.numWords = DocumentWordIterator.sumTotalTermFreq(workspace, d, CAPrefs.SHOW_PART_OF_SPEECH);
-				}
-				Collections.sort(docs, new Comparator<ConciseDocument>() {
-					public int compare(ConciseDocument o1, ConciseDocument o2) {
-						return o1.title.compareTo(o2.title);
-					}
-				});
-			}
+			lineChart.getData().clear();
 			
 			SQLiteDB.createTableIfNotExists(CATable.WordTrender);
 			// add existing words
 			String sql = "SELECT * FROM " + CATable.WordTrender.name();
 			ResultSet rs = SQLiteDB.executeQuery(sql);
+			ArrayList<String> words = new ArrayList<String>();
 			while (rs.next()) {
-				addSeriesFor(rs.getString(DBColumn.Word.columnName()));
+				String word = rs.getString(DBColumn.Word.columnName());
+				words.add(word);
 			}
 			rs.close();
+			
+			if (collapse) {
+				if (cd.equals(ALL_DOCUMENTS))
+					addCollapseSeries(words);
+				else {
+					addCollapseSeriesFor(words, doc);
+				}
+			}
+			else {
+				for (String word: words) {
+					if (cd.equals(ALL_DOCUMENTS))
+						addSeriesFor(word);
+					else
+						addSeriesFor(word, doc);
+				}
+			}
+			words.clear();
 			
 		} catch (Exception e) {
 			workspace.logError(gear, e);
 			Dialog.showException(e);
 		}
 		spinner.close();
-		super.loadData();
 	}
 	
 	public void unloadData() {
@@ -189,35 +354,188 @@ public class WordTrender extends GearController {
 		super.dispose();
 	}
 	
-	private void addSeriesFor(String word) throws Exception {
-		// check if the word already exists
-		for (Series<String, Number> series : lineChart.getData()) {
-			if (series.getName().equals(word))
-				return;
+	private void addCollapseSeries(List<String> words) throws Exception {
+		Series<Number, Number> series = new Series<>();
+		series.setName(StringUtils.join(words, ","));
+		
+		Map<ConciseDocument, Integer> freqTable = new HashMap<ConciseDocument, Integer>();
+		for (String word : words) {
+			Map<ConciseDocument, Integer> fTable = WordUtils.wordFreqByDocs(workspace, word, docs);
+			for (Iterator<ConciseDocument> iterator = fTable.keySet().iterator(); iterator.hasNext(); ) {
+				ConciseDocument key = iterator.next();
+				if (freqTable.containsKey(key)) {
+					freqTable.put(key, freqTable.get(key) + fTable.get(key));
+				} else {
+					freqTable.put(key, fTable.get(key));
+				}
+			}
+			fTable.clear();
 		}
 		
-		Series<String, Number> series = new Series<>();
-		series.setName(word);
-		
-		Map<ConciseDocument, Integer> freqTable = WordUtils.wordFreqByDocs(workspace, word, docs);
-		for (ConciseDocument doc : docs) {
-			if (freqTable.get(doc) != null) {
-				XYChart.Data<String, Number> data = 
-						new XYChart.Data<String, Number>(
-								String.valueOf(docs.indexOf(doc)), 
-								freqTable.get(doc).intValue());
-				series.getData().add(data);
-				data.setNode(new HoveredNode(word, data));
+		for (ConciseDocument cd : docs) {
+			int freq = 0;
+			if (freqTable.get(cd) != null) {
+				freq = freqTable.get(cd).intValue();
 			}
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(
+							docs.indexOf(cd),
+							freq);
+			series.getData().add(data);
+			data.setNode(new HoveredNode(series.getName(), cd));
 		}
 		lineChart.getData().add(series);
 	}
 	
+	private void addSeriesFor(String word) throws Exception {
+		// check if the word already exists
+		for (Series<Number, Number> series : lineChart.getData()) {
+			if (series.getName().equals(word))
+				return;
+		}
+		
+		Series<Number, Number> series = new Series<>();
+		series.setName(word);
+		
+		Map<ConciseDocument, Integer> freqTable = WordUtils.wordFreqByDocs(workspace, word, docs);
+		for (ConciseDocument cd : docs) {
+			int freq = 0;
+			if (freqTable.get(cd) != null) {
+				freq = freqTable.get(cd).intValue();
+			}
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(
+							docs.indexOf(cd),
+							freq);
+			series.getData().add(data);
+			data.setNode(new HoveredNode(word, cd));
+		}
+		lineChart.getData().add(series);
+	}
+	
+	private void addCollapseSeriesFor(List<String> words, ConciseDocument cd) {
+		Series<Number, Number> series = new Series<>();
+		series.setName(StringUtils.join(words, ","));
+		
+		Map<Integer, Integer> freqTable = new HashMap<Integer, Integer>();
+		for (String word : words) {
+			Map<Integer, Integer> fTable = getSegmentFreqTable(word, cd);
+			for (Iterator<Integer> iterator = fTable.keySet().iterator(); iterator.hasNext(); ) {
+				Integer key = iterator.next();
+				if (freqTable.containsKey(key)) {
+					freqTable.put(key, freqTable.get(key) + fTable.get(key));
+				} else {
+					freqTable.put(key, fTable.get(key));
+				}
+			}
+			fTable.clear();
+		}
+		
+		// start putting line chart series
+		for (int i = 0; i < SEGMENTS; i++) {
+			int freq = 0;
+			if (freqTable.get(Integer.valueOf(i)) != null) {
+				freq = freqTable.get(Integer.valueOf(i)).intValue();
+			}
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(i, freq);
+			series.getData().add(data);
+			data.setNode(new HoveredNode(series.getName(), cd));
+		}
+		lineChart.getData().add(series);
+	}
+	
+	// TODO 寫得很潦草，需要改寫
+	private void addSeriesFor(String word, ConciseDocument cd) {
+		// check if the word already exists
+		for (Series<Number, Number> series : lineChart.getData()) {
+			if (series.getName().equals(word))
+				return;
+		}
+		
+		Series<Number, Number> series = new Series<>();
+		series.setName(word);
+		
+		// start putting line chart series
+		Map<Integer, Integer> freqTable = getSegmentFreqTable(word, cd);
+		for (int i = 0; i < SEGMENTS; i++) {
+			int freq = 0;
+			if (freqTable.get(Integer.valueOf(i)) != null) {
+				freq = freqTable.get(Integer.valueOf(i)).intValue();
+			}
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(i, freq);
+			series.getData().add(data);
+			data.setNode(new HoveredNode(word, cd));
+		}
+		lineChart.getData().add(series);
+	}
+	
+	// TODO 寫得很潦草，需要改寫
+	private Map<Integer, Integer> getSegmentFreqTable(String word, ConciseDocument cd) {
+		// 調用 concordance plotter 的方法
+		HashMap<Integer, Integer> freqTable = new HashMap<Integer, Integer>();
+		try {
+			final String preTag = "<>";
+			final String postTag = "</>";
+			Conc conc = new Conc(workspace, 
+								 word, 
+								 CAPrefs.SHOW_PART_OF_SPEECH);
+			DocumentHighlighter highlighter = 
+					new DocumentHighlighter(
+							workspace, 
+							conc.getQuery(),
+							cd.docID,
+							new String[] { preTag },
+							new String[] { postTag},
+							CAPrefs.SHOW_PART_OF_SPEECH) 
+			{
+				public Analyzer getAnalyzer() {
+					return new ConciseTokenAnalyzer(Config.LUCENE_VERSION, 
+													CAPrefs.SHOW_PART_OF_SPEECH);
+				}
+			};
+			
+			String content = highlighter.getHighlightText();
+			if (content != null) {
+				content = content.replace(" "+postTag, postTag+" ");
+				ArrayList<Integer> positions = new ArrayList<Integer>();
+				
+				int wordsCount = 0;
+				StringTokenizer st = new StringTokenizer(content, " \n");
+				while (st.hasMoreTokens()) {
+					String w = st.nextToken();
+					if (w.endsWith(postTag)) {
+						positions.add(wordsCount);
+					}
+					wordsCount++;
+				}
+				
+				// mapping positions into segments
+				for (int p : positions) {
+					int x = Math.round( SEGMENTS * p / wordsCount );
+					Integer count = freqTable.get(x);
+					if (count == null)
+						freqTable.put(x, 1);
+					else
+						freqTable.put(x, count + 1);
+				}
+				positions.clear();
+			}
+			
+		} catch (Exception e) {
+			workspace.logError(gear, e);
+			Dialog.showException(e);
+		}
+		return freqTable;
+	}
+	
 	class HoveredNode extends StackPane {
-		HoveredNode(String word, final XYChart.Data<String, Number> data) {
-			final int index = Integer.parseInt(data.getXValue());
+		HoveredNode(String word, final ConciseDocument cd) {
+			final int index = docs.indexOf(cd);
 			setOnMouseEntered(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
+					//final ScrollPane sp = new ScrollPane();
 					final VBox vbox = new VBox(5);
 					vbox.getStyleClass().addAll("chart-line-symbol", "chart-series-line");
 					
@@ -225,14 +543,14 @@ public class WordTrender extends GearController {
 					freqTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.BOLD, 11));
 					vbox.getChildren().add(freqTitle);
 					
-					for (Series<String, Number> series : lineChart.getData()) {						
+					for (Series<Number, Number> series : lineChart.getData()) {						
 						// find legend Label
 						final Legend legend = (Legend) lineChart.lookup(".chart-legend");
 						Label legendLabel = (Label) legend.getChildrenUnmodifiable().get(lineChart.getData().indexOf(series));
 						WritableImage img = legendLabel.getGraphic().snapshot(new SnapshotParameters(), null);
 						
 						// set up Label
-						XYChart.Data<String, Number> d = series.getData().get(index);
+						XYChart.Data<Number, Number> d = series.getData().get(index);
 						Label wordCount = new Label(series.getName() + ": " + d.getYValue());
 						wordCount.setGraphic(new ImageView(img));
 						wordCount.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 14));
@@ -240,11 +558,14 @@ public class WordTrender extends GearController {
 						vbox.getChildren().add(wordCount);
 					}
 					// append document title to VBox
-					Text docTitle = new Text(docs.get(index).title);
+					Text docTitle = new Text(cd.title);
 					docTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 9));
 					vbox.getChildren().add(docTitle);
 					vbox.autosize();
 					
+					//sp.setContent(vbox);
+					//sp.setPrefSize(250, 300);
+					//getChildren().setAll(sp);
 					getChildren().setAll(vbox);
 					
 					// set alignment
@@ -277,7 +598,6 @@ public class WordTrender extends GearController {
 					getChildren().clear();
 		        }
 			});
-			
 			setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
 					getChildren().clear();
@@ -285,13 +605,13 @@ public class WordTrender extends GearController {
 					// open DocumentViewer
 					DocumentViewer viewer = (DocumentViewer) Gear.DocumentViewer.open(workspace);
 					StringBuilder sb = new StringBuilder();
-					for (Series<String, Number> series : lineChart.getData()) {
+					for (Series<Number, Number> series: lineChart.getData()) {
 						if (sb.length() > 0) sb.append(" ");
 						sb.append(series.getName());
 					}
 					CAQuery query = new CAQuery(Gear.DocumentViewer);
 					query.searchStr = sb.toString();
-					viewer.open(docs.get(index).docID, 1, query);
+					viewer.open(cd.docID, 1, query);
 					sb.setLength(0);
 				}
 			});
@@ -315,7 +635,7 @@ public class WordTrender extends GearController {
 					
 					Concise.getCurrentWorkspace().logInfo(query.toString());
 					CAQueryUtils.logQuery(query);
-					// TODO lemma translation and stop words
+					
 					Conc conc = new Conc(workspace, query.searchStr, CAPrefs.SHOW_PART_OF_SPEECH);
 					ArrayList<String> words = new ArrayList<String>();
 					words.addAll(conc.getSearchWords());

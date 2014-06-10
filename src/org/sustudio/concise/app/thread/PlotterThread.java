@@ -66,7 +66,7 @@ public class PlotterThread extends ConciseThread {
 					}
 				};
 				String content = highlighter.getHighlightText();
-				content = content.replace(" </>", "</> ");
+				content = content.replace(" "+postTag, postTag+" ");
 				StringBuilder pos = new StringBuilder();
 				
 				long wordsCount = 0;
