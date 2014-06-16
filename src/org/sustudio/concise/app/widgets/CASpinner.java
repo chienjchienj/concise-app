@@ -126,7 +126,7 @@ public class CASpinner extends Shell {
 				}
 
 				setAlpha(alpha);
-
+				
 				getDisplay().timerExec(1000 / 120, this);
 			}
 		};

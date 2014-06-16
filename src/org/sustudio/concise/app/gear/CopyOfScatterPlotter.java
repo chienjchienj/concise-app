@@ -51,18 +51,18 @@ import org.sustudio.concise.app.query.DefaultConcQuery;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.concordance.Conc;
-import org.sustudio.concise.core.statistics.ConcisePCACorr;
-import org.sustudio.concise.core.statistics.ConcisePCACorr.PC;
+import org.sustudio.concise.core.statistics.pca.ConcisePCA;
+import org.sustudio.concise.core.statistics.pca.ConcisePCA.PC;
 import org.sustudio.concise.core.wordlister.Word;
 
 import com.sun.javafx.charts.Legend;
 
-public class ScatterPlotter extends GearController {
+public class CopyOfScatterPlotter extends GearController {
 
-	private ConcisePCACorr pca = null;
+	private ConcisePCA pca = null;
 	private ScatterChart<Number, Number> scatterChart;
 	
-	public ScatterPlotter() {
+	public CopyOfScatterPlotter() {
 		super(CABox.GearBox, Gear.ScatterPlotter);
 	}
 	
@@ -110,7 +110,7 @@ public class ScatterPlotter extends GearController {
 					final int index = legend.getChildrenUnmodifiable().indexOf(node);
 					node.setOnMouseClicked(new EventHandler<MouseEvent>() {
 						@Override public void handle(MouseEvent event) {
-							CASpinner spinner = new CASpinner(ScatterPlotter.this);
+							CASpinner spinner = new CASpinner(CopyOfScatterPlotter.this);
 							spinner.open();
 							scatterChart.getData().remove(index);
 							// remove from database
@@ -177,7 +177,7 @@ public class ScatterPlotter extends GearController {
 			public void run() {
 				try {
 					if (pca == null) {
-						pca = new ConcisePCACorr(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
+						pca = new ConcisePCA(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
 					}
 					
 					getDisplay().asyncExec(new Runnable() {

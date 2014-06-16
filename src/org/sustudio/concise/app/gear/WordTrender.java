@@ -138,6 +138,7 @@ public class WordTrender extends GearController {
 		// creating the chart
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
 		lineChart.setLegendSide(Side.RIGHT);
+		border.setCenter(lineChart);
 		
 		// get legend
 		final Legend legend = (Legend) lineChart.lookup(".chart-legend");
@@ -150,24 +151,7 @@ public class WordTrender extends GearController {
 					final int index = legend.getChildrenUnmodifiable().indexOf(node);
 					node.setOnMouseClicked(new EventHandler<MouseEvent>() {
 						@Override public void handle(MouseEvent event) {
-							CASpinner spinner = new CASpinner(WordTrender.this);
-							spinner.open();
-							lineChart.getData().remove(index);
-							// remove from database
-							try {
-								String word = ((Label) node).getText();
-								String sql = "DELETE FROM " + CATable.WordTrender.name() + " WHERE " + DBColumn.Word.columnName() + " = ?";
-								PreparedStatement ps = SQLiteDB.prepareStatement(sql);
-								ps.setString(1, word);
-								ps.executeUpdate();
-								Concise.getCurrentWorkspace().getConnection().commit();
-								ps.close();
-								
-							} catch (Exception e) {
-								workspace.logError(gear, e);
-								Dialog.showException(e);
-							}
-							spinner.close();
+							removeSeries(((Label) node).getText());
 						}
 					});
 					node.setOnMouseEntered(new EventHandler<MouseEvent>() {
@@ -198,7 +182,6 @@ public class WordTrender extends GearController {
 			}
 		});
 		
-		border.setCenter(lineChart);
 		fxCanvas.setScene(new Scene(border));
 		return fxCanvas;
 	}
@@ -213,14 +196,15 @@ public class WordTrender extends GearController {
 		hbox.setSpacing(10);
 		
 		ObservableList<ConciseDocument> docList = FXCollections.observableArrayList();
-		// add a fake ConciseDocument to represent ALL Documents
+		// add a dummy ConciseDocument to represent ALL Documents
 		docList.add(ALL_DOCUMENTS);
 		for (ConciseDocument d : docs) {
 			docList.add(d);
 		}
 		
-		ComboBox<ConciseDocument> cmbDoc = new ComboBox<ConciseDocument>(docList);
-		cmbDoc.setCellFactory(new Callback<ListView<ConciseDocument>, ListCell<ConciseDocument>>() {
+		ComboBox<ConciseDocument> cmbDocs = new ComboBox<ConciseDocument>(docList);
+		// 下拉選單的文字格式
+		cmbDocs.setCellFactory(new Callback<ListView<ConciseDocument>, ListCell<ConciseDocument>>() {
 			@Override public ListCell<ConciseDocument> call(ListView<ConciseDocument> param) {
 				return new ListCell<ConciseDocument>() {
 					protected void updateItem(ConciseDocument cd, boolean empty) {
@@ -233,7 +217,10 @@ public class WordTrender extends GearController {
 				};
 			}
 		});
-		cmbDoc.setConverter(new StringConverter<ConciseDocument>() {
+		
+		// 製作 ComboBox 呈現的格式
+		cmbDocs.setValue(doc);
+		cmbDocs.setConverter(new StringConverter<ConciseDocument>() {
 			@Override public String toString(ConciseDocument cd) {
 				return cd.title;
 			}
@@ -243,8 +230,7 @@ public class WordTrender extends GearController {
 			}
 			
 		});
-		cmbDoc.setValue(doc);
-		cmbDoc.valueProperty().addListener(new ChangeListener<ConciseDocument>() {
+		cmbDocs.valueProperty().addListener(new ChangeListener<ConciseDocument>() {
 			@Override public void changed(
 					ObservableValue<? extends ConciseDocument> observable,
 					ConciseDocument oldDoc, ConciseDocument newDoc) {
@@ -253,7 +239,7 @@ public class WordTrender extends GearController {
 			}
 			
 		});
-		cmbDoc.setMaxWidth(Double.MAX_VALUE);
+		cmbDocs.setMaxWidth(Double.MAX_VALUE);
 		
 		CheckBox cbCollapse = new CheckBox("Collapse");
 		cbCollapse.setPrefWidth(200);
@@ -265,7 +251,6 @@ public class WordTrender extends GearController {
 				collapse = new_val;
 				loadDocument(doc);
 			}
-			
 		});
 		
 		Button btnClear = new Button("Clear");
@@ -283,7 +268,7 @@ public class WordTrender extends GearController {
 		});
 		btnClear.setPrefWidth(150);
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cmbDoc, cbCollapse, btnClear);
+		hbox.getChildren().addAll(cmbDocs, cbCollapse, btnClear);
 		
 		return hbox;
 	}
@@ -322,9 +307,8 @@ public class WordTrender extends GearController {
 			if (collapse) {
 				if (cd.equals(ALL_DOCUMENTS))
 					addCollapseSeries(words);
-				else {
+				else
 					addCollapseSeriesFor(words, doc);
-				}
 			}
 			else {
 				for (String word: words) {
@@ -354,10 +338,68 @@ public class WordTrender extends GearController {
 		super.dispose();
 	}
 	
-	private void addCollapseSeries(List<String> words) throws Exception {
+	/**
+	 * 刪除 series
+	 * @param word
+	 */
+	private void removeSeries(final String word) {
+		final CASpinner spinner = new CASpinner(WordTrender.this);
+		spinner.open();
+		Thread thread = new Thread() {
+			public void run() {
+				
+				// remove from database
+				try {
+					String sql = "DELETE FROM " + CATable.WordTrender.name() + " WHERE " + DBColumn.Word.columnName() + " = ?";
+					PreparedStatement ps = SQLiteDB.prepareStatement(sql);
+					ps.setString(1, word);
+					ps.executeUpdate();
+					Concise.getCurrentWorkspace().getConnection().commit();
+					ps.close();
+					
+				} catch (Exception e) {
+					workspace.logError(gear, e);
+					Dialog.showException(e);
+				}
+				
+				getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						for (Series<Number, Number> series : lineChart.getData()) {
+							if (series.getName().equals(word)) {
+								int index = lineChart.getData().indexOf(series);
+								lineChart.getData().remove(index);
+								break;
+							}
+						}
+						spinner.close();
+					}
+				});
+			}
+		};
+		thread.setDaemon(true);
+		thread.start();
+	}
+	
+	private void addSeriesData(String seriesName, Map<ConciseDocument, Integer> freqTable) {
 		Series<Number, Number> series = new Series<>();
-		series.setName(StringUtils.join(words, ","));
+		series.setName(seriesName);
 		
+		for (ConciseDocument cd : docs) {
+			int freq = 0;
+			if (freqTable.get(cd) != null) {
+				freq = freqTable.get(cd).intValue();
+			}
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(
+							docs.indexOf(cd),
+							freq);
+			series.getData().add(data);
+			data.setNode(new HoveredNode(series.getName(), cd, docs.indexOf(cd)));
+		}
+		lineChart.getData().add(series);
+	}
+	
+	private void addCollapseSeries(List<String> words) throws Exception {
 		Map<ConciseDocument, Integer> freqTable = new HashMap<ConciseDocument, Integer>();
 		for (String word : words) {
 			Map<ConciseDocument, Integer> fTable = WordUtils.wordFreqByDocs(workspace, word, docs);
@@ -371,20 +413,7 @@ public class WordTrender extends GearController {
 			}
 			fTable.clear();
 		}
-		
-		for (ConciseDocument cd : docs) {
-			int freq = 0;
-			if (freqTable.get(cd) != null) {
-				freq = freqTable.get(cd).intValue();
-			}
-			XYChart.Data<Number, Number> data =
-					new XYChart.Data<Number, Number>(
-							docs.indexOf(cd),
-							freq);
-			series.getData().add(data);
-			data.setNode(new HoveredNode(series.getName(), cd));
-		}
-		lineChart.getData().add(series);
+		addSeriesData(StringUtils.join(words, ","), freqTable);
 	}
 	
 	private void addSeriesFor(String word) throws Exception {
@@ -394,28 +423,28 @@ public class WordTrender extends GearController {
 				return;
 		}
 		
-		Series<Number, Number> series = new Series<>();
-		series.setName(word);
-		
 		Map<ConciseDocument, Integer> freqTable = WordUtils.wordFreqByDocs(workspace, word, docs);
-		for (ConciseDocument cd : docs) {
+		addSeriesData(word, freqTable);
+	}
+	
+	private void addSeriesData(String seriesName, Map<Integer, Integer> freqTable, ConciseDocument cd) {
+		Series<Number, Number> series = new Series<>();
+		series.setName(seriesName);
+		
+		for (int i = 0; i < SEGMENTS; i++) {
 			int freq = 0;
-			if (freqTable.get(cd) != null) {
-				freq = freqTable.get(cd).intValue();
+			if (freqTable.get(Integer.valueOf(i)) != null) {
+				freq = freqTable.get(Integer.valueOf(i)).intValue();
 			}
 			XYChart.Data<Number, Number> data =
-					new XYChart.Data<Number, Number>(
-							docs.indexOf(cd),
-							freq);
+					new XYChart.Data<Number, Number>(i, freq);
 			series.getData().add(data);
-			data.setNode(new HoveredNode(word, cd));
+			data.setNode(new HoveredNode(series.getName(), cd, i));
 		}
 		lineChart.getData().add(series);
 	}
 	
 	private void addCollapseSeriesFor(List<String> words, ConciseDocument cd) {
-		Series<Number, Number> series = new Series<>();
-		series.setName(StringUtils.join(words, ","));
 		
 		Map<Integer, Integer> freqTable = new HashMap<Integer, Integer>();
 		for (String word : words) {
@@ -431,21 +460,9 @@ public class WordTrender extends GearController {
 			fTable.clear();
 		}
 		
-		// start putting line chart series
-		for (int i = 0; i < SEGMENTS; i++) {
-			int freq = 0;
-			if (freqTable.get(Integer.valueOf(i)) != null) {
-				freq = freqTable.get(Integer.valueOf(i)).intValue();
-			}
-			XYChart.Data<Number, Number> data =
-					new XYChart.Data<Number, Number>(i, freq);
-			series.getData().add(data);
-			data.setNode(new HoveredNode(series.getName(), cd));
-		}
-		lineChart.getData().add(series);
+		addSeriesData(StringUtils.join(words, ","), freqTable, cd);
 	}
 	
-	// TODO 寫得很潦草，需要改寫
 	private void addSeriesFor(String word, ConciseDocument cd) {
 		// check if the word already exists
 		for (Series<Number, Number> series : lineChart.getData()) {
@@ -453,22 +470,9 @@ public class WordTrender extends GearController {
 				return;
 		}
 		
-		Series<Number, Number> series = new Series<>();
-		series.setName(word);
-		
 		// start putting line chart series
 		Map<Integer, Integer> freqTable = getSegmentFreqTable(word, cd);
-		for (int i = 0; i < SEGMENTS; i++) {
-			int freq = 0;
-			if (freqTable.get(Integer.valueOf(i)) != null) {
-				freq = freqTable.get(Integer.valueOf(i)).intValue();
-			}
-			XYChart.Data<Number, Number> data =
-					new XYChart.Data<Number, Number>(i, freq);
-			series.getData().add(data);
-			data.setNode(new HoveredNode(word, cd));
-		}
-		lineChart.getData().add(series);
+		addSeriesData(word, freqTable, cd);
 	}
 	
 	// TODO 寫得很潦草，需要改寫
@@ -531,16 +535,16 @@ public class WordTrender extends GearController {
 	}
 	
 	class HoveredNode extends StackPane {
-		HoveredNode(String word, final ConciseDocument cd) {
-			final int index = docs.indexOf(cd);
+		HoveredNode(String word, final ConciseDocument cd, final int xIndex) {
 			setOnMouseEntered(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
-					//final ScrollPane sp = new ScrollPane();
+					
 					final VBox vbox = new VBox(5);
 					vbox.getStyleClass().addAll("chart-line-symbol", "chart-series-line");
 					
-					Text freqTitle = new Text("Frequency:");
+					Text freqTitle = new Text(cd.title);
 					freqTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.BOLD, 11));
+					freqTitle.autosize();
 					vbox.getChildren().add(freqTitle);
 					
 					for (Series<Number, Number> series : lineChart.getData()) {						
@@ -550,7 +554,7 @@ public class WordTrender extends GearController {
 						WritableImage img = legendLabel.getGraphic().snapshot(new SnapshotParameters(), null);
 						
 						// set up Label
-						XYChart.Data<Number, Number> d = series.getData().get(index);
+						XYChart.Data<Number, Number> d = series.getData().get(xIndex);
 						Label wordCount = new Label(series.getName() + ": " + d.getYValue());
 						wordCount.setGraphic(new ImageView(img));
 						wordCount.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 14));
@@ -558,17 +562,19 @@ public class WordTrender extends GearController {
 						vbox.getChildren().add(wordCount);
 					}
 					// append document title to VBox
-					Text docTitle = new Text(cd.title);
-					docTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 9));
-					vbox.getChildren().add(docTitle);
+					//Text docTitle = new Text(cd.title);
+					//docTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 9));
+					//vbox.getChildren().add(docTitle);
 					vbox.autosize();
 					
+					//final ScrollPane sp = new ScrollPane();
 					//sp.setContent(vbox);
 					//sp.setPrefSize(250, 300);
 					//getChildren().setAll(sp);
 					getChildren().setAll(vbox);
 					
 					// set alignment
+					// TODO 位置不太對
 					vbox.setTranslateY(-10);
 					vbox.setTranslateX(-10);
 					if (getLayoutY() - vbox.getHeight() - 10 > 0) {

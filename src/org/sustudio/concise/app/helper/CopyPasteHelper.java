@@ -240,6 +240,13 @@ public class CopyPasteHelper {
 		}
 		else if (activeControl instanceof Table) {
 			((Table) activeControl).selectAll();
+			// selectAll did not trigger selectionEvent,
+			// we have to do it manually
+			for (Listener listener : activeControl.getListeners(SWT.Selection)) {
+				Event event = new Event();
+				event.widget = activeControl;
+				listener.handleEvent(event);
+			}
 		}
 		else if (activeControl instanceof Tree) {
 			((Tree) activeControl).selectAll();
