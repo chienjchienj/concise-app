@@ -33,15 +33,13 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -50,13 +48,14 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Control;
+import org.gillius.jfxutils.chart.ChartPanManager;
+import org.gillius.jfxutils.chart.JFXChartUtil;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.DBColumn;
@@ -129,16 +128,16 @@ public class WordTrender extends GearController {
 		BorderPane border = new BorderPane();
 		border.setTop(getLineChartToolBar());
 		
-		final NumberAxis xAxis = new NumberAxis();
+		final NumberAxis xAxis = new NumberAxis(1, docs.size(), 1);
 		//xAxis.setLabel("Document");
 		final NumberAxis yAxis = new NumberAxis();
 		yAxis.setLabel("Frequency");
-		yAxis.setTickUnit(1);
 		
 		// creating the chart
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
-		lineChart.setLegendSide(Side.RIGHT);
+		lineChart.setLegendSide(Side.BOTTOM);
 		border.setCenter(lineChart);
+		addZoomSupportForChart();
 		
 		// get legend
 		final Legend legend = (Legend) lineChart.lookup(".chart-legend");
@@ -202,44 +201,28 @@ public class WordTrender extends GearController {
 			docList.add(d);
 		}
 		
-		ComboBox<ConciseDocument> cmbDocs = new ComboBox<ConciseDocument>(docList);
-		// 下拉選單的文字格式
-		cmbDocs.setCellFactory(new Callback<ListView<ConciseDocument>, ListCell<ConciseDocument>>() {
-			@Override public ListCell<ConciseDocument> call(ListView<ConciseDocument> param) {
-				return new ListCell<ConciseDocument>() {
-					protected void updateItem(ConciseDocument cd, boolean empty) {
-						super.updateItem(cd, empty);
-						if (cd != null && !empty) {
-							setContentDisplay(ContentDisplay.TEXT_ONLY);
-							setText(cd.title);
-						}
-					}
-				};
-			}
-		});
-		
-		// 製作 ComboBox 呈現的格式
-		cmbDocs.setValue(doc);
-		cmbDocs.setConverter(new StringConverter<ConciseDocument>() {
-			@Override public String toString(ConciseDocument cd) {
-				return cd.title;
-			}
-
-			@Override public ConciseDocument fromString(String string) {
-				return null;	// 不允許新增
-			}
-			
-		});
-		cmbDocs.valueProperty().addListener(new ChangeListener<ConciseDocument>() {
-			@Override public void changed(
-					ObservableValue<? extends ConciseDocument> observable,
-					ConciseDocument oldDoc, ConciseDocument newDoc) {
+		ChoiceBox<ConciseDocument> cb = new ChoiceBox<ConciseDocument>(docList);
+		cb.getSelectionModel().select(doc);
+		cb.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<ConciseDocument>() {
+			public void changed(
+					ObservableValue<? extends ConciseDocument> ov,
+					ConciseDocument oldDoc, ConciseDocument newDoc) 
+			{
 				doc = newDoc;
 				loadDocument(doc);
 			}
 			
 		});
-		cmbDocs.setMaxWidth(Double.MAX_VALUE);
+		cb.setConverter(new StringConverter<ConciseDocument>() {
+			public String toString(ConciseDocument cd) {
+				return cd.title;
+			}
+			public ConciseDocument fromString(String string) {
+				return null;	// now allowed
+			}
+		});
+		cb.setMaxWidth(Double.MAX_VALUE);
+		cb.setStyle("-fx-font-size: 11px");
 		
 		CheckBox cbCollapse = new CheckBox("Collapse");
 		cbCollapse.setPrefWidth(200);
@@ -252,6 +235,25 @@ public class WordTrender extends GearController {
 				loadDocument(doc);
 			}
 		});
+		cbCollapse.setFont(Font.font(Font.getDefault().getName(), 11));
+		
+		Button btnAutoZoom = new Button("Auto Zoom");
+		btnAutoZoom.setOnMouseReleased(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				lineChart.getXAxis().setAutoRanging( true );
+				lineChart.getYAxis().setAutoRanging( true );
+				ObservableList<XYChart.Series<Number,Number>> data = lineChart.getData();
+				lineChart.setData( FXCollections.<XYChart.Series<Number, Number>>emptyObservableList() );
+				lineChart.setData( data );
+			}
+		});
+		Image magnifyImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/06-magnify.png"));
+		ImageView magnifyImageView = new ImageView(magnifyImage);
+		magnifyImageView.setFitHeight(11);
+		magnifyImageView.setPreserveRatio(true);
+		btnAutoZoom.setGraphic(magnifyImageView);
+		btnAutoZoom.setPrefWidth(140);
+		btnAutoZoom.setFont(Font.font(Font.getDefault().getName(), 11));
 		
 		Button btnClear = new Button("Clear");
 		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -266,11 +268,49 @@ public class WordTrender extends GearController {
 				}
 			}			
 		});
-		btnClear.setPrefWidth(150);
+		Image trashImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/trash-can.png"));
+		ImageView trashImageView = new ImageView(trashImage);
+		trashImageView.setFitHeight(11);
+		trashImageView.setPreserveRatio(true);
+		btnClear.setGraphic(trashImageView);
+		btnClear.setPrefWidth(140);
+		btnClear.setFont(Font.font(Font.getDefault().getName(), 11));
+		
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cmbDocs, cbCollapse, btnClear);
+		hbox.getChildren().addAll(cb, cbCollapse, btnAutoZoom, btnClear);
 		
 		return hbox;
+	}
+	
+	// TODO this is a test function
+	private void addZoomSupportForChart() {
+		lineChart.getXAxis().setAutoRanging( true );
+		lineChart.getYAxis().setAutoRanging( true );
+		
+		//Panning works via either secondary (right) mouse or primary with ctrl held down
+		ChartPanManager panner = new ChartPanManager( lineChart );
+		panner.setMouseFilter( new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() == MouseButton.SECONDARY ||
+						 ( mouseEvent.getButton() == MouseButton.PRIMARY &&
+						   mouseEvent.isShortcutDown() ) ) {
+					//let it through
+				} else {
+					mouseEvent.consume();
+				}
+			}
+		} );
+		panner.start();
+		
+		JFXChartUtil.setupZooming(lineChart, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() != MouseButton.PRIMARY ||
+				     mouseEvent.isShortcutDown() )
+					mouseEvent.consume();
+			}
+		} );
 	}
 	
 	public Control[] getZoomableControls() {

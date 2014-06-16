@@ -1,4 +1,4 @@
-package org.sustudio.concise.app.gear;
+package org.sustudio.concise.app.gear.scatterPlotter;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -13,6 +13,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.embed.swt.FXCanvas;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -30,43 +31,43 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.util.converter.NumberStringConverter;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
+import org.gillius.jfxutils.chart.ChartPanManager;
+import org.gillius.jfxutils.chart.JFXChartUtil;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
-import org.sustudio.concise.app.helper.CopyPasteHelper;
+import org.sustudio.concise.app.gear.DocumentViewer;
+import org.sustudio.concise.app.gear.Gear;
+import org.sustudio.concise.app.gear.GearController;
+import org.sustudio.concise.app.gear.IGearSortable;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
+import org.sustudio.concise.app.query.DefaultConcQuery;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
 import org.sustudio.concise.core.concordance.Conc;
+import org.sustudio.concise.core.corpus.ConciseDocument;
 import org.sustudio.concise.core.statistics.ConciseMultivariate;
 import org.sustudio.concise.core.statistics.DocumentPlotData;
 import org.sustudio.concise.core.statistics.WordPlotData;
@@ -81,10 +82,9 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 	private enum MultivariateAnalysis { PrincipalComponentAnalysis, CorrespondenceAnalysis };
 	private MultivariateAnalysis analysis;
 	private List<WordPlotData> wordData;
-	private Table dataTable;
 	private FXCanvas fxCanvas;
 	private ScatterChart<Number, Number> scatterChart;
-	
+	private ScatterPlotterDataPanel dataPanel;
 	
 	public ScatterPlotter() {
 		super(CABox.GearBox, Gear.ScatterPlotter);
@@ -102,114 +102,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		sash.setLayout(new FillLayout());
 		
 		fxCanvas = createChart(sash);
-		
-		dataTable = new Table(sash, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.VIRTUAL);
-		dataTable.setHeaderVisible(true);
-		dataTable.setLinesVisible(true);
-		CopyPasteHelper.listenTo(dataTable);
-		
-		SelectionAdapter columnSortListener = new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				TableColumn column = (TableColumn) event.widget;
-				DBColumn dbColumn = (DBColumn) column.getData(GearController._DB_COLUMN);
-				if (dbColumn != null) {
-					Table table = column.getParent();
-					int dir = table.getSortDirection();
-					
-					if (column == table.getSortColumn())
-						dir = dir == SWT.UP ? SWT.DOWN : SWT.UP;
-					else
-						table.setSortColumn(column);
-					table.setSortDirection(dir);
-					
-					sort();
-				}
-			}
-		};
-		
-		final TableColumn tblclmWord = new TableColumn(dataTable, SWT.NONE);
-		tblclmWord.setData(_DB_COLUMN, DBColumn.Word);
-		tblclmWord.addSelectionListener(columnSortListener);
-		tblclmWord.setText("Word");
-		tblclmWord.setWidth(100);
-		final TableColumn tblclmFreq = new TableColumn(dataTable, SWT.RIGHT);
-		tblclmFreq.setData(_DB_COLUMN, DBColumn.Freq);
-		tblclmFreq.addSelectionListener(columnSortListener);
-		tblclmFreq.setText("Frequency");
-		tblclmFreq.setWidth(120);
-		
-		dataTable.setSortDirection(SWT.DOWN);
-		dataTable.setSortColumn(tblclmFreq);
-		
-		dataTable.addListener(SWT.SetData, new Listener() {
-			public void handleEvent(Event event) {
-				TableItem item = (TableItem) event.item;
-				int index = event.index;
-				if (wordData != null) {
-					Word word = wordData.get(index).getWord();
-					item.setText(0, word.getWord());
-					item.setText(1, new NumberStringConverter("#,###,###,###").toString(word.totalTermFreq));
-				}
-			}
-		});
-		dataTable.setItemCount(0);
-		
-		dataTable.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event event) {
-				int seriesIndex = 1;
-				if (MultivariateAnalysis.PrincipalComponentAnalysis.equals(analysis)) {
-					seriesIndex = 0;
-				}
-				for (Data<Number, Number> data : scatterChart.getData().get(seriesIndex).getData()) {
-					HoverNode node = (HoverNode) data.getNode();
-					node.hideLabel();
-				}
-				for (int i : dataTable.getSelectionIndices()) {
-					HoverNode node = (HoverNode) scatterChart.getData().get(seriesIndex).getData().get(i).getNode();
-					node.setScaleX(2.0);
-					node.setScaleY(2.0);
-					node.showLabel();
-				}
-			}
-		});
-		
-		dataTable.addKeyListener(new KeyAdapter() {
-			public void keyReleased(KeyEvent event) {
-				switch (event.keyCode) {
-				case SWT.DEL:
-				case SWT.BS:
-					// TODO add warning
-					try {
-						if (wordData == null) return;
-						String sql = "DELETE FROM " + CATable.ScatterPlotter.name() + " WHERE " + DBColumn.Word.columnName() + " = ?";
-						PreparedStatement ps = SQLiteDB.prepareStatement(sql);
-						for (int i : dataTable.getSelectionIndices()) {
-							String word = wordData.get(i).getWord().word;
-							ps.setString(1, word);
-							ps.addBatch();
-						}
-						SQLiteDB.executeBatch(ps);
-						loadData();
-						
-					} catch (SQLException | IOException e) {
-						workspace.logError(gear, e);
-						Dialog.showException(e);
-					}
-					
-				case SWT.ESC:
-					dataTable.setSelection(-1);
-					int seriesIndex = 1;
-					if (MultivariateAnalysis.PrincipalComponentAnalysis.equals(analysis)) {
-						seriesIndex = 0;
-					}
-					for (Data<Number, Number> data : scatterChart.getData().get(seriesIndex).getData()) {
-						HoverNode node = (HoverNode) data.getNode();
-						node.hideLabel();
-					}
-					break;
-				}
-			}
-		});
+		dataPanel = new ScatterPlotterDataPanel(sash, this);
 		
 		sash.setWeights(new int[] { 70, 30 } );
 		
@@ -241,10 +134,29 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				loadData();
 			}			
 		});
+		cb.setStyle("-fx-font-size: 11px");
+		cb.setMaxWidth(Double.MAX_VALUE);
 		
+		Button btnAutoZoom = new Button("Auto Zoom");
+		btnAutoZoom.setOnMouseReleased(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				scatterChart.getXAxis().setAutoRanging( true );
+				scatterChart.getYAxis().setAutoRanging( true );
+				ObservableList<XYChart.Series<Number,Number>> data = scatterChart.getData();
+				scatterChart.setData( FXCollections.<XYChart.Series<Number, Number>>emptyObservableList() );
+				scatterChart.setData( data );
+			}
+		});
+		Image magnifyImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/06-magnify.png"));
+		ImageView magnifyImageView = new ImageView(magnifyImage);
+		magnifyImageView.setFitHeight(11);
+		magnifyImageView.setPreserveRatio(true);
+		btnAutoZoom.setGraphic(magnifyImageView);
+		btnAutoZoom.setPrefWidth(140);
+		btnAutoZoom.setFont(Font.font(Font.getDefault().getName(), 11));
 		
-		Button btnReset = new Button("Reset");
-		btnReset.setOnMousePressed(new EventHandler<MouseEvent>() {
+		Button btnClear = new Button("Clear");
+		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override public void handle(MouseEvent event) {
 				try {
 					SQLiteDB.dropTableIfExists(CATable.ScatterPlotter);
@@ -256,8 +168,33 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				}
 			}			
 		});
+		Image trashImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/trash-can.png"));
+		ImageView trashImageView = new ImageView(trashImage);
+		trashImageView.setFitHeight(11);
+		trashImageView.setPreserveRatio(true);
+		btnClear.setGraphic(trashImageView);
+		btnClear.setPrefWidth(140);
+		btnClear.setFont(Font.font(Font.getDefault().getName(), 11));
+		
+		final Button btnTable = new Button("Hide Table");
+		btnTable.setOnMousePressed(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				SashForm sashForm = (SashForm) fxCanvas.getParent();
+				if (sashForm.getMaximizedControl() == null) {
+					sashForm.setMaximizedControl(fxCanvas);
+					btnTable.setText("Show Table");
+				}
+				else {
+					sashForm.setMaximizedControl(null);
+					btnTable.setText("Hide Table");
+				}
+			}
+		});
+		btnTable.setPrefWidth(140);
+		btnTable.setFont(Font.font(Font.getDefault().getName(), 11));
+		
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cb, btnReset);
+		hbox.getChildren().addAll(cb, btnAutoZoom, btnClear, btnTable);
 		border.setTop(hbox);
 		
 		// creating the chart
@@ -267,6 +204,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		scatterChart.setAnimated(false);
 		scatterChart.setLegendSide(Side.BOTTOM);
 		border.setCenter(scatterChart);
+		addZoomSupportForChart();
 		
 		// handling legend
 		final Legend legend = (Legend) scatterChart.lookup(".chart-legend");
@@ -318,14 +256,48 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		return fxCanvas;
 	}
 	
+	// TODO this is still a test function
+	private void addZoomSupportForChart() {
+		scatterChart.getXAxis().setAutoRanging( true );
+		scatterChart.getYAxis().setAutoRanging( true );
+		
+		//Panning works via either secondary (right) mouse or primary with ctrl held down
+		ChartPanManager panner = new ChartPanManager( scatterChart );
+		panner.setMouseFilter( new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() == MouseButton.SECONDARY ||
+						 ( mouseEvent.getButton() == MouseButton.PRIMARY &&
+						   mouseEvent.isShortcutDown() ) ) {
+					//let it through
+				} else {
+					mouseEvent.consume();
+				}
+			}
+		} );
+		panner.start();
+		
+		JFXChartUtil.setupZooming(scatterChart, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() != MouseButton.PRIMARY ||
+				     mouseEvent.isShortcutDown() )
+					mouseEvent.consume();
+			}
+		} );
+	}
+	
 	
 	public Control getControl() {
 		return fxCanvas;
 	}
 	
 	public Control[] getZoomableControls() {
-		// TODO enable zoom
-		return new Control[] { dataTable };
+		return new Control[] { dataPanel.getZoomableControl() };
+	}
+	
+	public ScatterChart<Number, Number> getChart() {
+		return scatterChart;
 	}
 	
 	public void loadData() {
@@ -334,8 +306,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		scatterChart.getData().clear();
 		if (wordData != null) {
 			wordData.clear();
-			dataTable.setItemCount(wordData.size());
-			dataTable.clearAll();
+			dataPanel.clearTable();
 		}
 		
 		Thread thread = new Thread() {
@@ -372,19 +343,25 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 								scatterChart.getXAxis().setLabel("Factor 1 (" + fmt.toString(multivariate.getRatesOfInertia()[1]) + ")");
 								scatterChart.getYAxis().setLabel("Factor 2 (" + fmt.toString(multivariate.getRatesOfInertia()[2]) + ")");
 								
+								// sort wordData
+								sort();
+								
 								if (MultivariateAnalysis.CorrespondenceAnalysis.equals(analysis)) {
 									Series<Number, Number> dSeries = new Series<Number, Number>();
-									dSeries.setName("Docs");
+									dSeries.setName("Documents");
 									for (DocumentPlotData pd : multivariate.getColProjectionData()) {
 										XYChart.Data<Number, Number> data = 
 												new XYChart.Data<Number, Number>(pd.getX(), pd.getY());
-										data.setNode(new HoverNode(pd.getDoc().title));
+										data.setNode(new HoverNode(pd.getDoc().title, pd.getDoc()));
 										dSeries.getData().add(data);
 									}
 									scatterChart.getData().add(dSeries);
 								}
-								// sort wordData
-								sort();
+								
+								// make word node toFront
+								for(Data<Number, Number> data : scatterChart.getData().get(0).getData()) {
+									data.getNode().toFront();
+								}
 							}
 						});
 					}
@@ -415,7 +392,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 	public void sort() {
 		Collections.sort(wordData, new Comparator<WordPlotData>() {
 			public int compare(WordPlotData o1, WordPlotData o2) {
-				DBColumn dbColumn = (DBColumn) dataTable.getSortColumn().getData(_DB_COLUMN);
+				DBColumn dbColumn = dataPanel.getSortColumn();
 				int dir;
 				if (dbColumn.equals(DBColumn.Word)) {
 					dir = o1.getWord().getWord().compareTo(o2.getWord().getWord());
@@ -428,29 +405,33 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 						dir = 0;
 				}
 				
-				if (dataTable.getSortDirection() == SWT.DOWN)
+				if (dataPanel.getSortDirection() == SWT.DOWN)
 					dir = dir * -1;
 				return dir;
 			}							
 		});
 		
-		dataTable.setItemCount(wordData.size());
-		dataTable.clearAll();
-		
 		// check if words series already exists
-		if (scatterChart.getData().size() > 1) {
-			scatterChart.getData().remove(1);
+		Series<Number, Number> series;
+		if (scatterChart.getData().isEmpty()) {
+			series = new Series<Number, Number>();
+			series.setName("Words");
+		}
+		else {
+			series = scatterChart.getData().get(0);
+			series.getData().clear();
 		}
 		
-		Series<Number, Number> series = new Series<Number, Number>();
-		series.setName("Words");
 		for (WordPlotData pd : wordData) {
 			XYChart.Data<Number, Number> data = 
 					new XYChart.Data<Number, Number>(pd.getX(), pd.getY());
-			data.setNode(new HoverNode(pd.getWord().word));
+			data.setNode(new HoverNode(pd.getWord().word, pd.getWord()));
 			series.getData().add(data);
 		}
-		scatterChart.getData().add(series);
+		if (scatterChart.getData().isEmpty()) {
+			scatterChart.getData().add(series);
+		}
+		dataPanel.setInput(wordData);
 	}
 	
 	public void doit(CAQuery query) {
@@ -504,9 +485,12 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 	class HoverNode extends StackPane {
 		
 		final String text;
+		final Object obj;
 		
-		public HoverNode(final String text) {
+		public HoverNode(final String text, final Object obj) {
 			this.text = text;
+			this.obj = obj;
+			this.setOpacity(0.8);
 			setOnMouseEntered(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent arg0) {
 					showLabel();
@@ -519,25 +503,42 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 					hideLabel();
 				}
 			});
+			setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override public void handle(MouseEvent event) {
+					hideLabel();
+					if (obj instanceof ConciseDocument) {
+						// open document viewer
+						DocumentViewer dv = (DocumentViewer) Gear.DocumentViewer.open(workspace);
+						dv.open(((ConciseDocument) obj).docID);
+					}
+					else if (obj instanceof Word) {
+						// open concordancer
+						Gear.Concordancer.open(workspace)
+							.doit(new DefaultConcQuery(text));
+					}
+				}
+			});
 		}
 		
 		public void showLabel() {
-			final Text textNode = new Text(text);
-			textNode.setFont(Font.font(Font.getDefault().getName(), 9));
-			textNode.autosize();
-			textNode.setTranslateY(-10);
+			final Label label = new Label(text);
+			label.setFont(Font.font(Font.getDefault().getName(), 9));
+			label.setMinSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
+			//textNode.autosize();
+			label.setTranslateY(-10);
 			setAlignment(Pos.BOTTOM_CENTER);
 			
-			getChildren().addAll(textNode);
+			getChildren().addAll(label);
 			toFront();
 			
 			DropShadow shadow = new DropShadow();
 			setEffect(shadow);
+			toFront();
 		}
 		
 		public void hideLabel() {
 			getChildren().clear();
-			toBack();
+			//toBack();
 			setEffect(null);
 			setScaleX(1.0);
 			setScaleY(1.0);

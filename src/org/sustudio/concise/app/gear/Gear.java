@@ -15,6 +15,7 @@ import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.collocationalNetworker.CollocationalNetworker;
 import org.sustudio.concise.app.gear.concordancePlotter.ConcordancePlotter;
 import org.sustudio.concise.app.gear.lemmaEditor.LemmaEditor;
+import org.sustudio.concise.app.gear.scatterPlotter.ScatterPlotter;
 import org.sustudio.concise.app.gear.wordClouder.WordClouder;
 
 public enum Gear {
