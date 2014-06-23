@@ -30,6 +30,7 @@ import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,6 +40,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.util.converter.NumberStringConverter;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -83,7 +85,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 	private MultivariateAnalysis analysis;
 	private List<WordPlotData> wordData;
 	private FXCanvas fxCanvas;
-	private ScatterChart<Number, Number> scatterChart;
+	private ConciseScatterChart scatterChart;
 	private ScatterPlotterDataPanel dataPanel;
 	
 	public ScatterPlotter() {
@@ -147,13 +149,19 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				scatterChart.setData( data );
 			}
 		});
-		Image magnifyImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/06-magnify.png"));
-		ImageView magnifyImageView = new ImageView(magnifyImage);
-		magnifyImageView.setFitHeight(11);
-		magnifyImageView.setPreserveRatio(true);
-		btnAutoZoom.setGraphic(magnifyImageView);
+		btnAutoZoom.setGraphic(getImageView("/org/sustudio/concise/app/icon/06-magnify.png"));
 		btnAutoZoom.setPrefWidth(140);
-		btnAutoZoom.setFont(Font.font(Font.getDefault().getName(), 11));
+		btnAutoZoom.setFont(new Font(11));
+		
+		Button btnLabel = new Button("Label");
+		btnLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				scatterChart.setLabelVisible(!scatterChart.isLabelVisible());
+			}
+		});
+		btnLabel.setGraphic(getImageView("/org/sustudio/concise/app/icon/15-tags.png"));
+		btnLabel.setPrefWidth(140);
+		btnLabel.setFont(new Font(11));
 		
 		Button btnClear = new Button("Clear");
 		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -168,13 +176,9 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				}
 			}			
 		});
-		Image trashImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/trash-can.png"));
-		ImageView trashImageView = new ImageView(trashImage);
-		trashImageView.setFitHeight(11);
-		trashImageView.setPreserveRatio(true);
-		btnClear.setGraphic(trashImageView);
+		btnClear.setGraphic(getImageView("/org/sustudio/concise/app/icon/trash-can.png"));
 		btnClear.setPrefWidth(140);
-		btnClear.setFont(Font.font(Font.getDefault().getName(), 11));
+		btnClear.setFont(new Font(11));
 		
 		final Button btnTable = new Button("Hide Table");
 		btnTable.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -190,17 +194,19 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				}
 			}
 		});
+		btnTable.setGraphic(getImageView("/org/sustudio/concise/app/icon/179-notepad.png"));
 		btnTable.setPrefWidth(140);
-		btnTable.setFont(Font.font(Font.getDefault().getName(), 11));
+		btnTable.setFont(new Font(11));
+		btnTable.setTooltip(new Tooltip("show/hide table"));
 		
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cb, btnAutoZoom, btnClear, btnTable);
+		hbox.getChildren().addAll(cb, btnAutoZoom, btnLabel, btnClear, btnTable);
 		border.setTop(hbox);
 		
 		// creating the chart
 		final NumberAxis xAxis = new NumberAxis();
 		final NumberAxis yAxis = new NumberAxis();
-		scatterChart = new ScatterChart<Number, Number>(xAxis, yAxis);
+		scatterChart = new ConciseScatterChart(xAxis, yAxis);
 		scatterChart.setAnimated(false);
 		scatterChart.setLegendSide(Side.BOTTOM);
 		border.setCenter(scatterChart);
@@ -213,6 +219,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			public void onChanged(Change<? extends Object> arg0) {
 				for (final Node node : legend.getChildrenUnmodifiable()) {
 				if (node instanceof Label) {
+					((Label) node).setTooltip( new Tooltip("show/hide " + ((Label) node).getText()) );
 					final int index = legend.getChildrenUnmodifiable().indexOf(node);
 					node.setOnMouseClicked(new EventHandler<MouseEvent>() {
 						@Override public void handle(MouseEvent event) {
@@ -252,11 +259,12 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			}
 		});
 		
+		
 		fxCanvas.setScene(new Scene(border));
 		return fxCanvas;
 	}
 	
-	// TODO this is still a test function
+	// TODO test function
 	private void addZoomSupportForChart() {
 		scatterChart.getXAxis().setAutoRanging( true );
 		scatterChart.getYAxis().setAutoRanging( true );
@@ -286,7 +294,6 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			}
 		} );
 	}
-	
 	
 	public Control getControl() {
 		return fxCanvas;
@@ -374,6 +381,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				getDisplay().asyncExec(new Runnable() {
 					public void run() {
 						spinner.close();
+						//scatterChart.showLabel();
 					}
 				});
 			}
@@ -482,10 +490,19 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		thread.start();
 	}
 	
+	private ImageView getImageView(String resource) {
+		Image image = new Image(getClass().getResourceAsStream(resource));
+		ImageView imageView = new ImageView(image);
+		imageView.setFitHeight(11);
+		imageView.setPreserveRatio(true);
+		return imageView;
+	}
+	
 	class HoverNode extends StackPane {
 		
 		final String text;
 		final Object obj;
+		Text textNode;
 		
 		public HoverNode(final String text, final Object obj) {
 			this.text = text;
@@ -521,27 +538,46 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		}
 		
 		public void showLabel() {
-			final Label label = new Label(text);
-			label.setFont(Font.font(Font.getDefault().getName(), 9));
-			label.setMinSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
-			//textNode.autosize();
-			label.setTranslateY(-10);
-			setAlignment(Pos.BOTTOM_CENTER);
-			
-			getChildren().addAll(label);
 			toFront();
-			
 			DropShadow shadow = new DropShadow();
 			setEffect(shadow);
 			toFront();
+			setScale(2.0);
+			if (textNode != null) {
+				textNode.setEffect(shadow);
+				textNode.setVisible(true);
+				textNode.setY(localToScene(getBoundsInLocal()).getMinY() - textNode.getBoundsInLocal().getHeight());
+			}
 		}
 		
 		public void hideLabel() {
-			getChildren().clear();
-			//toBack();
 			setEffect(null);
-			setScaleX(1.0);
-			setScaleY(1.0);
+			setScale(1.0);
+			
+			if (textNode != null) {
+				textNode.setEffect(null);
+				textNode.setVisible(scatterChart.isLabelVisible());
+				double offsetY = scatterChart.localToScene(scatterChart.getBoundsInLocal()).getMinY();
+				double y = localToScene(getBoundsInLocal()).getMinY() - textNode.getBoundsInLocal().getHeight() - offsetY;
+				textNode.setY(y);
+			}
+		}
+		
+		public void setTextNode(Text textNode) {
+			this.textNode = textNode;
+		}
+		
+		public Text getTextNode() {
+			return textNode;
+		}
+		
+		public void setScale(double value) {
+			setScaleX(value);
+			setScaleY(value);
+			if (textNode != null) {
+				textNode.setScaleX(value);
+				textNode.setScaleY(value);
+			}
 		}
 	}	
 }

@@ -36,6 +36,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 public class ScatterPlotterDataPanel extends Composite {
 
@@ -62,6 +63,7 @@ public class ScatterPlotterDataPanel extends Composite {
 				deleteWords();
 			}
 		});
+		tltmDelete.setImage(SWTResourceManager.getImage(getClass(), "/org/sustudio/concise/app/icon/201-remove.png"));
 		tltmDelete.setText("Delete");
 		tltmDelete.setEnabled(false);
 		
@@ -72,8 +74,20 @@ public class ScatterPlotterDataPanel extends Composite {
 					.doit(new DefaultConcQuery(wordData.get(dataTable.getSelectionIndex()).getWord().word));
 			}
 		});
+		tltmConcord.setImage(SWTResourceManager.getImage(getClass(), "/org/sustudio/concise/app/icon/97-puzzle.png"));
 		tltmConcord.setText("Concord.");
 		tltmConcord.setEnabled(false);
+		
+		new ToolItem(toolBar, SWT.SEPARATOR_FILL);
+		
+		final ToolItem tltmDetail = new ToolItem(toolBar, SWT.NONE);
+		tltmDetail.setText("Detail");
+		tltmDetail.setImage(SWTResourceManager.getImage(getClass(), "/org/sustudio/concise/app/icon/19-gear.png"));
+		tltmDetail.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent event) {
+				// TODO 開啓 correspondence ananlysis 的詳細資料
+			}
+		});
 		
 		dataTable = new Table(this, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.VIRTUAL);
 		dataTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
@@ -135,8 +149,6 @@ public class ScatterPlotterDataPanel extends Composite {
 				}
 				for (int i : dataTable.getSelectionIndices()) {
 					HoverNode node = (HoverNode) plotter.getChart().getData().get(0).getData().get(i).getNode();
-					node.setScaleX(2.0);
-					node.setScaleY(2.0);
 					node.showLabel();
 				}
 				

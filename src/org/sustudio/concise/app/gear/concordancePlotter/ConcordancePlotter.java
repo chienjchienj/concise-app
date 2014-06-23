@@ -51,12 +51,11 @@ import org.sustudio.concise.core.corpus.importer.ConciseField;
 public class ConcordancePlotter 
 	   extends GearController 
 	   implements IGearTableBased, IGearSortable, IGearFilterable, IGearFileRevealable {
-
+	
 	private Table table;
 	
 	public ConcordancePlotter() {
-		super(CABox.GearBox, Gear.ConcordancePlotter);
-		
+		super(CABox.GearBox, Gear.ConcordancePlotter);	
 	}
 	
 	protected Control createControl() {

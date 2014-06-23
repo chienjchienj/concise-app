@@ -29,9 +29,9 @@ public class Concise {
 	private static Workspace currentWorkspace;
 	
 	/**
-	 * Launch Concise. <br />
-	 * 1.) Open WorkspaceLauncher, decide what to load
-	 * 2.) Open Concise GUI
+	 * Launch Concise. <p>
+	 * 1.) Open WorkspaceLauncher, decide what to load <br />
+	 * 2.) Open Concise GUI <br />
 	 * 
 	 * @param args
 	 */

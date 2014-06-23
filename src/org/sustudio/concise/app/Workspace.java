@@ -306,7 +306,5 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 		public long totalTermFreq = -1;
 
 		public long totalRefTermFreq = -1;
-
-		public String[] SearchWorders;
 	}
 }
