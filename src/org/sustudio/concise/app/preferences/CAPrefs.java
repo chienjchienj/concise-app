@@ -14,6 +14,7 @@ import org.sustudio.concise.app.enums.KeynessMeasurement;
 import org.sustudio.concise.app.enums.SignificanceMeasurement;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.gear.collocationalNetworker.NetworkLayout;
+import org.sustudio.concise.app.gear.scatterPlotter.ScatterPlotter.Analysis;
 import org.sustudio.concise.app.gear.wordClouder.CloudAngle;
 import org.sustudio.concise.core.CCPrefs;
 import org.sustudio.concise.core.collocation.CollocateMeasurement;
@@ -188,4 +189,9 @@ public class CAPrefs extends CCPrefs implements Serializable {
 	
 	
 	
+	///////////////////////////////////////////////////////////////////////
+	// Scatter Plotter Settings
+	///////////////////////////////////////////////////////////////////////
+	
+	public static Analysis SCATTER_PLOT_ANALYSIS = Analysis.CA;
 }

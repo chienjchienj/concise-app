@@ -25,7 +25,7 @@ public class CASpinner extends Shell {
 	protected CLabel lblMsg;
 	
 	public CASpinner(GearController controller) {
-		super(controller.getShell(), SWT.NO_TRIM | SWT.ON_TOP);
+		super(controller.getShell(), SWT.NO_TRIM);
 		this.controller = controller;
 		
 		createContents();

@@ -13,10 +13,14 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -47,14 +51,14 @@ public class ScatterPlotterDataPanel extends Composite {
 	public ScatterPlotterDataPanel(Composite parent, final ScatterPlotter plotter) {
 		super(parent, SWT.EMBEDDED);
 		this.plotter = plotter;
-		GridLayout gridLayout = new GridLayout(1, false);
+		GridLayout gridLayout = new GridLayout(2, false);
 		gridLayout.horizontalSpacing = 0;
 		gridLayout.marginWidth = 0;
 		gridLayout.marginHeight = 0;
 		gridLayout.verticalSpacing = 0;
 		setLayout(gridLayout);
 		
-		ToolBar toolBar = new ToolBar(this, SWT.FLAT | SWT.RIGHT);
+		final ToolBar toolBar = new ToolBar(this, SWT.FLAT | SWT.RIGHT);
 		toolBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 		
 		final ToolItem tltmDelete = new ToolItem(toolBar, SWT.NONE);
@@ -78,19 +82,34 @@ public class ScatterPlotterDataPanel extends Composite {
 		tltmConcord.setText("Concord.");
 		tltmConcord.setEnabled(false);
 		
-		new ToolItem(toolBar, SWT.SEPARATOR_FILL);
+		final ToolBar toolBar2 = new ToolBar(this, SWT.FLAT | SWT.RIGHT);
+		toolBar2.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, false, 1, 1));
 		
-		final ToolItem tltmDetail = new ToolItem(toolBar, SWT.NONE);
-		tltmDetail.setText("Detail");
-		tltmDetail.setImage(SWTResourceManager.getImage(getClass(), "/org/sustudio/concise/app/icon/19-gear.png"));
-		tltmDetail.addSelectionListener(new SelectionAdapter() {
+		final Menu menu = new Menu(this.getShell(), SWT.POP_UP);
+		MenuItem menuItem = new MenuItem(menu, SWT.PUSH);
+		menuItem.setText("Show Detail");
+		menuItem.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent event) {
-				// TODO 開啓 correspondence ananlysis 的詳細資料
+				// 開啓 correspondence ananlysis 的詳細資料
+				plotter.showDetailPanel();
+			}
+		});
+		
+		final ToolItem tltmMore = new ToolItem(toolBar2, SWT.NONE);
+		tltmMore.setToolTipText("More options");
+		tltmMore.setImage(SWTResourceManager.getImage(getClass(), "/org/sustudio/concise/app/icon/more-14x14.png"));
+		tltmMore.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent event) {
+				Rectangle rect = tltmMore.getBounds();
+				Point pt = new Point(rect.x, rect.y + rect.height);
+				pt = toolBar2.toDisplay(pt);
+				menu.setLocation(pt.x, pt.y);
+				menu.setVisible(true);
 			}
 		});
 		
 		dataTable = new Table(this, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.VIRTUAL);
-		dataTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+		dataTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 		dataTable.setHeaderVisible(true);
 		dataTable.setLinesVisible(true);
 		CopyPasteHelper.listenTo(dataTable);

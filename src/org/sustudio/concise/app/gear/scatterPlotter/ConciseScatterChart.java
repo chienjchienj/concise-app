@@ -97,6 +97,8 @@ public class ConciseScatterChart extends ScatterChart<Number, Number> {
 		for (Node n : getPlotChildren()) {
 			HoverNode node = (HoverNode) n;
 			node.getTextNode().setVisible(visible);
+			if (!node.isVisible())
+				node.getTextNode().setVisible(false);
 		}
 	}
 	

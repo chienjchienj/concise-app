@@ -46,6 +46,7 @@ import javafx.util.converter.NumberStringConverter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -81,19 +82,19 @@ import com.sun.javafx.charts.Legend;
 
 public class ScatterPlotter extends GearController implements IGearSortable {
 
-	private enum MultivariateAnalysis { PrincipalComponentAnalysis, CorrespondenceAnalysis };
-	private MultivariateAnalysis analysis;
+	public enum Analysis { PCA, CA };
+	
+	private static final String _DETAIL = "_DETAIL";
+	
 	private List<WordPlotData> wordData;
 	private FXCanvas fxCanvas;
 	private ConciseScatterChart scatterChart;
 	private ScatterPlotterDataPanel dataPanel;
 	
+	private DetailPanel detailPanel;
+	
 	public ScatterPlotter() {
 		super(CABox.GearBox, Gear.ScatterPlotter);
-	}
-	
-	protected void init() {
-		analysis = MultivariateAnalysis.CorrespondenceAnalysis;
 	}
 	
 	@Override
@@ -128,19 +129,19 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			"Correspondence Analysis (CA)")
 		);
 		cb.getSelectionModel().select(
-				ArrayUtils.indexOf(MultivariateAnalysis.values(), analysis)
+				ArrayUtils.indexOf(Analysis.values(), CAPrefs.SCATTER_PLOT_ANALYSIS)
 		);
 		cb.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
 			public void changed(ObservableValue<? extends Number> ov, Number value, Number new_value) {
-				analysis = MultivariateAnalysis.values()[new_value.intValue()];
+				CAPrefs.SCATTER_PLOT_ANALYSIS = Analysis.values()[new_value.intValue()];
 				loadData();
 			}			
 		});
 		cb.setStyle("-fx-font-size: 11px");
 		cb.setMaxWidth(Double.MAX_VALUE);
 		
-		Button btnAutoZoom = new Button("Auto Zoom");
-		btnAutoZoom.setOnMouseReleased(new EventHandler<MouseEvent>() {
+		Button btnZoomFit = new Button("Zoom Fit");
+		btnZoomFit.setOnMouseReleased(new EventHandler<MouseEvent>() {
 			@Override public void handle(MouseEvent event) {
 				scatterChart.getXAxis().setAutoRanging( true );
 				scatterChart.getYAxis().setAutoRanging( true );
@@ -149,9 +150,9 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				scatterChart.setData( data );
 			}
 		});
-		btnAutoZoom.setGraphic(getImageView("/org/sustudio/concise/app/icon/06-magnify.png"));
-		btnAutoZoom.setPrefWidth(140);
-		btnAutoZoom.setFont(new Font(11));
+		btnZoomFit.setGraphic(getImageView("/org/sustudio/concise/app/icon/06-magnify.png"));
+		btnZoomFit.setPrefWidth(140);
+		btnZoomFit.setFont(new Font(11));
 		
 		Button btnLabel = new Button("Label");
 		btnLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -200,7 +201,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		btnTable.setTooltip(new Tooltip("show/hide table"));
 		
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cb, btnAutoZoom, btnLabel, btnClear, btnTable);
+		hbox.getChildren().addAll(cb, btnZoomFit, btnLabel, btnClear, btnTable);
 		border.setTop(hbox);
 		
 		// creating the chart
@@ -221,11 +222,17 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				if (node instanceof Label) {
 					((Label) node).setTooltip( new Tooltip("show/hide " + ((Label) node).getText()) );
 					final int index = legend.getChildrenUnmodifiable().indexOf(node);
+					RGB rgb = CAPrefs.HIGHLIGH_BG_COLOR_SCHEME[index % CAPrefs.HIGHLIGH_BG_COLOR_SCHEME.length];
+					//node.setStyle("-fx-background-color: rgb(" + rgb.red + "," + rgb.green + "," + rgb.blue + ")");
+					((Label) node).getGraphic().setStyle("-fx-background-color: rgb(" + rgb.red + "," + rgb.green + "," + rgb.blue + ")");
 					node.setOnMouseClicked(new EventHandler<MouseEvent>() {
 						@Override public void handle(MouseEvent event) {
 							for (Data<Number, Number> data : scatterChart.getData().get(index).getData()) {
-								Node dot = data.getNode();
+								HoverNode dot = (HoverNode) data.getNode();
 								data.getNode().setVisible(!dot.isVisible());
+								if (dot.getTextNode() != null) {
+									dot.getTextNode().setVisible(dot.isVisible() && scatterChart.isLabelVisible());
+								}
 							}
 						}
 					});
@@ -233,9 +240,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 						@Override public void handle(MouseEvent event) {
 							DropShadow dropShadow = new DropShadow();
 							for (Data<Number, Number> data : scatterChart.getData().get(index).getData()) {
-								Node dot = data.getNode();
-								dot.setScaleX(1.5);
-								dot.setScaleY(1.5);
+								HoverNode dot = (HoverNode) data.getNode();
+								dot.setScale(1.5);
 								dot.setEffect(dropShadow);
 							}
 							node.setEffect(dropShadow);
@@ -246,9 +252,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 							// series might be removed
 							if (scatterChart.getData().size() > index) {
 								for (Data<Number, Number> data : scatterChart.getData().get(index).getData()) {
-									Node dot = data.getNode();
-									dot.setScaleX(1);
-									dot.setScaleY(1);
+									HoverNode dot = (HoverNode) data.getNode();
+									dot.setScale(1.0);
 									dot.setEffect(null);
 								}
 								node.setEffect(null);
@@ -315,6 +320,10 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			wordData.clear();
 			dataPanel.clearTable();
 		}
+		if (detailPanel != null && !detailPanel.isDisposed())
+			detailPanel.dispose();
+		detailPanel = null;
+		setData(_DETAIL, null);
 		
 		Thread thread = new Thread() {
 			public void run() {
@@ -331,13 +340,13 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 					rs.close();
 					if (!words.isEmpty()) {
 						final ConciseMultivariate multivariate;
-						switch (analysis) {
+						switch (CAPrefs.SCATTER_PLOT_ANALYSIS) {
 						default:
-						case CorrespondenceAnalysis:
+						case CA:
 							multivariate = new ConciseCA(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
 							break;
 						
-						case PrincipalComponentAnalysis:
+						case PCA:
 							multivariate = new ConcisePCACorr(workspace, CAPrefs.SHOW_PART_OF_SPEECH);
 							break;
 						}
@@ -347,13 +356,14 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 						getDisplay().asyncExec(new Runnable() {
 							public void run() {
 								NumberStringConverter fmt = new NumberStringConverter("#.##%");
-								scatterChart.getXAxis().setLabel("Factor 1 (" + fmt.toString(multivariate.getRatesOfInertia()[1]) + ")");
-								scatterChart.getYAxis().setLabel("Factor 2 (" + fmt.toString(multivariate.getRatesOfInertia()[2]) + ")");
+								scatterChart.getXAxis().setLabel("Dimension 1 (" + fmt.toString(multivariate.getRates()[0]) + ")");
+								scatterChart.getYAxis().setLabel("Dimension 2 (" + fmt.toString(multivariate.getRates()[1]) + ")");
 								
 								// sort wordData
 								sort();
 								
-								if (MultivariateAnalysis.CorrespondenceAnalysis.equals(analysis)) {
+								// Correspondence Analysis 會有兩組變項
+								if (Analysis.CA.equals(CAPrefs.SCATTER_PLOT_ANALYSIS)) {
 									Series<Number, Number> dSeries = new Series<Number, Number>();
 									dSeries.setName("Documents");
 									for (DocumentPlotData pd : multivariate.getColProjectionData()) {
@@ -369,6 +379,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 								for(Data<Number, Number> data : scatterChart.getData().get(0).getData()) {
 									data.getNode().toFront();
 								}
+								
+								setData(_DETAIL, multivariate.getResult());
 							}
 						});
 					}
@@ -376,14 +388,14 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				} catch (Exception e) {
 					workspace.logError(gear, e);
 					Dialog.showException(e);
-				}
+				} finally {
 				
-				getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						spinner.close();
-						//scatterChart.showLabel();
-					}
-				});
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							spinner.close();
+						}
+					});
+				}
 			}
 		};
 		thread.setDaemon(true);
@@ -391,10 +403,25 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		super.loadData();
 	}
 	
+	public void showDetailPanel() {
+		if (detailPanel != null && !detailPanel.isDisposed()) {
+			detailPanel.setActive();
+		}
+		else {
+			detailPanel = new DetailPanel();
+			detailPanel.open();
+			detailPanel.setData(getData(_DETAIL));
+		}
+	}
+	
 	public void unloadData() {
 		super.unloadData();
 		scatterChart.getData().clear();
-		
+		if (detailPanel != null && !detailPanel.isDisposed()) {
+			detailPanel.dispose();
+			detailPanel = null;
+		}
+		setData(_DETAIL, null);
 	}
 	
 	public void sort() {
@@ -507,7 +534,13 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		public HoverNode(final String text, final Object obj) {
 			this.text = text;
 			this.obj = obj;
-			this.setOpacity(0.8);
+			setOpacity(0.8);
+			RGB rgb = CAPrefs.HIGHLIGH_BG_COLOR_SCHEME[0];
+			if (obj instanceof ConciseDocument) {
+				rgb = CAPrefs.HIGHLIGH_BG_COLOR_SCHEME[1];
+			}
+			setStyle("-fx-background-color: rgb(" + rgb.red + "," + rgb.green + "," + rgb.blue + ")");
+			
 			setOnMouseEntered(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent arg0) {
 					showLabel();
@@ -579,5 +612,6 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 				textNode.setScaleY(value);
 			}
 		}
+		
 	}	
 }

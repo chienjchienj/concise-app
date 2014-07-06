@@ -309,7 +309,7 @@ public class DocumentViewer
 		};
 		
 		StringBuilder text = new StringBuilder();
-		TokenStream s = doc.getField(ConciseField.CONTENT.field()).tokenStream(analyzer);
+		TokenStream s = doc.getField(ConciseField.CONTENT.field()).tokenStream(analyzer, null);
 		CharTermAttribute t = s.addAttribute(CharTermAttribute.class);
 		s.reset();
 		while (s.incrementToken()) {

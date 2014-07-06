@@ -37,7 +37,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	public static String ask(final Shell shell, final String title, final String text, final String defaultValue) {
 		final Dialog dialog = new Dialog(shell);
 		dialog.setTitle(ResourceManager.getLabel(ResourceManager.INPUT));
-		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getCurrent().getSystemImage(SWT.ICON_INFORMATION)).addTextBox(defaultValue);
+		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getDefault().getSystemImage(SWT.ICON_INFORMATION)).addTextBox(defaultValue);
 		dialog.setButtonType(OpalDialogType.OK_CANCEL);
 		if (dialog.show() == 0) {
 			return dialog.getMessageArea().getTextBoxValue();
@@ -64,13 +64,13 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	 * @param errorMessage Error message
 	 */
 	public static void error(final Shell shell, final String title, final String errorMessage) {
-		Display.getCurrent().asyncExec(new Runnable() {
+		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				final Dialog dialog = new Dialog(shell);
 				dialog.setTitle(ResourceManager.getLabel(ResourceManager.APPLICATION_ERROR));
 				dialog.getMessageArea().setTitle(title).//
 						setText(errorMessage).//
-						setIcon(Display.getCurrent().getSystemImage(SWT.ICON_ERROR));
+						setIcon(Display.getDefault().getSystemImage(SWT.ICON_ERROR));
 				dialog.setButtonType(OpalDialogType.OK);
 				dialog.show();
 			}
@@ -95,11 +95,11 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	 * @param text text to display
 	 */
 	public static void inform(final Shell shell, final String title, final String text) {
-		Display.getCurrent().asyncExec(new Runnable() {
+		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				final Dialog dialog = new Dialog(shell);
 				dialog.setTitle(ResourceManager.getLabel(ResourceManager.INFORMATION));
-				dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getCurrent().getSystemImage(SWT.ICON_INFORMATION));
+				dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getDefault().getSystemImage(SWT.ICON_INFORMATION));
 				dialog.setButtonType(OpalDialogType.CLOSE);
 				dialog.show();
 			}
@@ -154,7 +154,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	public static boolean isConfirmed(final Shell shell, final String title, final String text, final int timer) {
 		final Dialog dialog = new Dialog(shell);
 		dialog.setTitle(ResourceManager.getLabel(ResourceManager.WARNING));
-		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getCurrent().getSystemImage(SWT.ICON_WARNING));
+		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getDefault().getSystemImage(SWT.ICON_WARNING));
 
 		dialog.getFooterArea().setTimer(timer).setTimerIndexButton(0);
 		dialog.setButtonType(OpalDialogType.YES_NO);
@@ -187,7 +187,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	public static int radioChoice(final Shell shell, final String title, final String text, final int defaultSelection, final String... values) {
 		final Dialog dialog = new Dialog(shell);
 		dialog.setTitle(ResourceManager.getLabel(ResourceManager.CHOICE));
-		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getCurrent().getSystemImage(SWT.ICON_QUESTION)).addRadioButtons(defaultSelection, values);
+		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getDefault().getSystemImage(SWT.ICON_QUESTION)).addRadioButtons(defaultSelection, values);
 		dialog.setButtonType(OpalDialogType.SELECT_CANCEL);
 		if (dialog.show() == 0) {
 			return dialog.getMessageArea().getRadioChoice();
@@ -202,7 +202,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	 * @param exception exception to display
 	 */
 	public static void showException(final Throwable exception) {
-		Display.getCurrent().asyncExec(new Runnable() {
+		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				final Dialog dialog = new Dialog(Concise.getActiveApp());
 				dialog.setTitle(ResourceManager.getLabel(ResourceManager.EXCEPTION));
@@ -213,7 +213,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 
 				dialog.getMessageArea().setTitle(noMessage ? className : msg).//
 						setText(noMessage ? "" : className).//
-						setIcon(Display.getCurrent().getSystemImage(SWT.ICON_ERROR)).//
+						setIcon(Display.getDefault().getSystemImage(SWT.ICON_ERROR)).//
 						setException(exception);
 
 				dialog.getFooterArea().setExpanded(true);
@@ -250,7 +250,7 @@ public class Dialog extends org.mihalis.opal.opalDialog.Dialog {
 	public static int choice(final Shell shell, final String title, final String text, final int defaultSelection, final ChoiceItem... items) {
 		final Dialog dialog = new Dialog(shell);
 		dialog.setTitle(ResourceManager.getLabel(ResourceManager.CHOICE));
-		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getCurrent().getSystemImage(SWT.ICON_QUESTION)).addChoice(defaultSelection, items);
+		dialog.getMessageArea().setTitle(title).setText(text).setIcon(Display.getDefault().getSystemImage(SWT.ICON_QUESTION)).addChoice(defaultSelection, items);
 		dialog.setButtonType(OpalDialogType.NONE);
 		dialog.show();
 		return dialog.getMessageArea().getChoice();

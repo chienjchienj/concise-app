@@ -4,12 +4,12 @@ import java.sql.PreparedStatement;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.lucene.search.ScoreDoc;
-import org.mihalis.opal.opalDialog.Dialog;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.SQLiteDataType;
+import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;

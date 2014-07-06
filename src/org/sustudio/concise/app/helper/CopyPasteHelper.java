@@ -5,6 +5,7 @@ import javafx.embed.swt.SWTFXUtils;
 import javafx.scene.image.WritableImage;
 
 import org.eclipse.gef4.cloudio.WordCloud;
+import org.eclipse.nebula.widgets.grid.Grid;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.FocusEvent;
@@ -97,6 +98,7 @@ public class CopyPasteHelper {
 		// check supported instance
 		if (!(control instanceof Text) &&
 			!(control instanceof Table) &&
+			!(control instanceof Grid) &&
 			!(control instanceof Tree) &&
 			!(control instanceof List) &&
 			!(control instanceof StyledText) &&
@@ -165,6 +167,12 @@ public class CopyPasteHelper {
 			Table table = (Table) activeControl;
 			selectAllEnabled = table.getItemCount() > 0;
 			copyEnabled = table.getSelectionCount() > 0;
+		}
+		
+		else if (activeControl instanceof Grid) {
+			Grid grid = (Grid) activeControl;
+			selectAllEnabled = grid.getItemCount() > 0;
+			copyEnabled = grid.getSelectionCount() > 0;
 		}
 		
 		else if (activeControl instanceof Tree) {
@@ -247,6 +255,9 @@ public class CopyPasteHelper {
 				event.widget = activeControl;
 				listener.handleEvent(event);
 			}
+		}
+		else if (activeControl instanceof Grid) {
+			((Grid) activeControl).selectAll();
 		}
 		else if (activeControl instanceof Tree) {
 			((Tree) activeControl).selectAll();

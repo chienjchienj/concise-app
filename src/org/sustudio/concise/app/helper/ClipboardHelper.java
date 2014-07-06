@@ -1,5 +1,7 @@
 package org.sustudio.concise.app.helper;
 
+import org.eclipse.nebula.widgets.grid.Grid;
+import org.eclipse.nebula.widgets.grid.GridItem;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
@@ -32,6 +34,7 @@ public class ClipboardHelper {
 	 */
 	public static void copyItemTextToClipboard(Control control) {
 		if (!(control instanceof Table) &&
+			!(control instanceof Grid) &&
 			!(control instanceof Tree) &&
 			!(control instanceof List)) {
 			
@@ -41,6 +44,9 @@ public class ClipboardHelper {
 		StringBuilder sb = new StringBuilder();
 		if (control instanceof Table && ((Table) control).getSelectionCount() > 0) {
 			copyTableItemToClipboard((Table) control, sb);
+		}
+		else if (control instanceof Grid && ((Grid) control).getSelectionCount() > 0) {
+			copyGridItemToClipboard((Grid) control, sb);
 		}
 		else if (control instanceof List && ((List) control).getSelectionCount() > 0) {
 			copyListItemToClipboard((List) control, sb);
@@ -74,6 +80,16 @@ public class ClipboardHelper {
 				}
 				sb.append("\n");
 			}
+		}
+	}
+	
+	private static void copyGridItemToClipboard(Grid grid, StringBuilder sb) {
+		// TODO grid should be able to select cell
+		for (GridItem item : grid.getSelection()) {
+			for (int i = 0; i < grid.getColumnCount(); i++) {
+				sb.append((i>0 ? "\t" : "") + item.getText(i));
+			}
+			sb.append("\n");
 		}
 	}
 	
