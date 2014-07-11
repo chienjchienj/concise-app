@@ -1,5 +1,7 @@
 package org.sustudio.concise.app.thread;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -46,10 +48,23 @@ public class CADeleteDocumentThread extends ConciseThread {
 			
 			dialog.setStatus("deleting...");
 			DocumentWriter writer = new DocumentWriter(workspace, indexType);
-			if (deleteAll)
+			if (deleteAll) {
 				writer.deleteAll();
-			else
+				// remove original documents
+				for (File file : workspace.getOriginalDocFolder(indexType).listFiles(new FileFilter() {
+
+					@Override
+					public boolean accept(File pathname) {
+						return pathname.isFile() && !pathname.isHidden();
+					}
+					
+				})) {
+					file.delete();
+				}
+			}	
+			else {
 				writer.deleteDocuments(docs);
+			}
 			writer.close();
 			
 			if (deleteAll) {

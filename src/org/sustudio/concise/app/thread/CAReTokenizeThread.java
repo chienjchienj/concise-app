@@ -15,6 +15,7 @@ import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.Workspace;
+import org.sustudio.concise.core.ConciseFile;
 import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.autocompleter.AutoCompleter;
 import org.sustudio.concise.core.corpus.ConciseDocument;
@@ -90,6 +91,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		
 		Workspace workspace = Concise.getCurrentWorkspace();
 		IndexReader reader = workspace.getIndexReader(indexType);
+		ConciseFile originalFolder = workspace.getOriginalDocFolder(indexType);
 		if (reader == null) return;
 		
 		// 1.) Read corpus file list
@@ -99,7 +101,7 @@ public class CAReTokenizeThread extends ConciseThread {
 			if (document == null) continue;
 			
 			boolean isTokenized = document.getField(ConciseField.IS_TOKENIZED.field()).numericValue().intValue() == 1;
-			File file = new File( document.get(ConciseField.FILENAME.field()) );
+			File file = new File( originalFolder, document.get(ConciseField.FILENAME.field()) );
 			files.put(file, isTokenized);
 		}
 		
@@ -111,6 +113,7 @@ public class CAReTokenizeThread extends ConciseThread {
 		// 3.) re-import files
 		dialog.setStatus("load settings...");
 		Importer importer = new Importer(workspace, indexType);
+		importer.setCopyFiles(false);
 		for (Map.Entry<File, Boolean> file : files.entrySet()) {
 			if (isInterrupted()) return;
 			
