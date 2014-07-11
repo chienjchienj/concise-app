@@ -131,6 +131,9 @@ public class CAPreferencesDialog extends Shell {
 			tab.setToolItem(item);
 		}
 		
+		ToolItem sep = new ToolItem(toolBar, SWT.SEPARATOR, toolBar.getItemCount()-1);
+		sep.setWidth(SWT.SEPARATOR_FILL);
+		
 		composite = new Composite(this, SWT.NONE);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 		layout = new StackLayout();

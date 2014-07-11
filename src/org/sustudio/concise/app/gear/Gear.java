@@ -17,6 +17,7 @@ import org.sustudio.concise.app.gear.concordancePlotter.ConcordancePlotter;
 import org.sustudio.concise.app.gear.lemmaEditor.LemmaEditor;
 import org.sustudio.concise.app.gear.scatterPlotter.ScatterPlotter;
 import org.sustudio.concise.app.gear.wordClouder.WordClouder;
+import org.sustudio.concise.app.gear.wordTrender.WordTrender;
 
 public enum Gear {
 

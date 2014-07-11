@@ -1,4 +1,4 @@
-package org.sustudio.concise.app.gear;
+package org.sustudio.concise.app.gear.wordTrender;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -62,6 +62,9 @@ import org.sustudio.concise.app.db.DBColumn;
 import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.enums.CABox;
+import org.sustudio.concise.app.gear.DocumentViewer;
+import org.sustudio.concise.app.gear.Gear;
+import org.sustudio.concise.app.gear.GearController;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
