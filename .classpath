@@ -18,12 +18,12 @@
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.pshelf_1.0.0.201406170952.jar" sourcepath="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.pshelf.source_1.0.0.201405151353.jar"/>
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.gef4.graph_0.1.0.201407050202.jar"/>
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.swt.cocoa.macosx.x86_64_3.102.1.v20140206-1358.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/Applications/eclipse/plugins/org.eclipse.nebula.widgets.grid_1.0.0.201406170952.jar"/>
-	<classpathentry kind="con" path="org.eclipse.fx.ide.jdt.core.JAVAFX_CONTAINER"/>
+	<classpathentry kind="lib" path="/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk/Contents/Home/jre/lib/jfxswt.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

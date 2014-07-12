@@ -3,13 +3,7 @@
 	<import file="create-run-jar.xml"/>
 	
 	<!-- check for java home -->
-	<!-- not work for Java 8
 	<exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome" />
-	-->
-	<exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome">
-		<arg value="-v" />
-		<arg value="1.7" />
-	</exec>
 	
 	<!-- update bundle version -->
 	<propertyfile file="bundle.properties">
