@@ -298,7 +298,7 @@ public class DocumentViewer
 			protected TokenStreamComponents createComponents(String fieldName,
 					Reader reader) {
 				
-				Tokenizer tokenizer = new LineAndWhitespaceTokenizer(Config.LUCENE_VERSION, reader);
+				Tokenizer tokenizer = new LineAndWhitespaceTokenizer(reader);
 				TokenStream result = new PartOfSpeechFilter(tokenizer, CAPrefs.SHOW_PART_OF_SPEECH);
 				if (!CCPrefs.POS_SEPARATOR.equals(Config.SYSTEM_POS_SEPERATOR)) {
 					result = new PartOfSpeechSeparatorFilter(result);
@@ -340,7 +340,7 @@ public class DocumentViewer
 		IndexWriter writer = new IndexWriter(tmpDirectory, 
 									new IndexWriterConfig(
 											Config.LUCENE_VERSION, 
-											new ImportPOSAnalyzer(Config.LUCENE_VERSION)));
+											new ImportPOSAnalyzer()));
 		
 		writer.addDocument(doc);
 		writer.close();

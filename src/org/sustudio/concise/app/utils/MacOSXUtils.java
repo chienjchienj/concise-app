@@ -39,9 +39,10 @@ public class MacOSXUtils {
 	 * @throws ScriptException
 	 */
 	public static void hideExtension(File file) throws ScriptException {
+		
 		String script = "tell application \"Finder\" to set extension hidden of (POSIX file \""+ file.getPath() + "\" as alias) to true";
 		ScriptEngineManager mgr = new ScriptEngineManager();
-		ScriptEngine engine = mgr.getEngineByName("AppleScript");
+		ScriptEngine engine = mgr.getEngineByName("AppleScriptEngine");
 		engine.eval(script);
 	}
 }

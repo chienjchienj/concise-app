@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -23,9 +22,13 @@ import javafx.embed.swt.FXCanvas;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
@@ -35,17 +38,24 @@ import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Control;
+import org.gillius.jfxutils.chart.ChartPanManager;
+import org.gillius.jfxutils.chart.JFXChartUtil;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.db.DBColumn;
@@ -60,6 +70,7 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
+import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.collocation.ConciseTokenAnalyzer;
 import org.sustudio.concise.core.concordance.Conc;
@@ -70,18 +81,17 @@ import org.sustudio.concise.core.wordlister.WordUtils;
 
 import com.sun.javafx.charts.Legend;
 
-@SuppressWarnings("restriction")
-public class WordTrender extends GearController {
+public class CopyOfWordTrender extends GearController {
 
 	protected static final ConciseDocument ALL_DOCUMENTS = new ConciseDocument();
 	protected static int SEGMENTS = 100;
 	
 	private ArrayList<ConciseDocument> docs;
-	private ConciseLineChart lineChart;
+	private LineChart<Number, Number> lineChart;
 	private ConciseDocument doc;
 	private boolean collapse = false;
 	
-	public WordTrender() {
+	public CopyOfWordTrender() {
 		super(CABox.GearBox, Gear.WordTrender);
 	}
 	
@@ -115,17 +125,22 @@ public class WordTrender extends GearController {
 	
 	@Override
 	protected Control createControl() {
-		// solve problem: Not on FX application thread; currentThread = JavaFX Application Thread
-		// see http://stackoverflow.com/questions/21083945/how-to-avoid-not-on-fx-application-thread-currentthread-javafx-application-th
-		Platform.setImplicitExit(false);
 		
 		final FXCanvas fxCanvas = new FXCanvas(this, SWT.NONE);
 		
 		BorderPane border = new BorderPane();
 		border.setTop(getLineChartToolBar());
 		
-		lineChart = new ConciseLineChart();
+		final NumberAxis xAxis = new NumberAxis(1, docs.size(), 1);
+		//xAxis.setLabel("Document");
+		final NumberAxis yAxis = new NumberAxis();
+		yAxis.setLabel("Frequency");
+		
+		// creating the chart
+		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
+		lineChart.setLegendSide(Side.BOTTOM);
 		border.setCenter(lineChart);
+		addZoomSupportForChart();
 		
 		// get legend
 		final Legend legend = (Legend) lineChart.lookup(".chart-legend");
@@ -211,7 +226,6 @@ public class WordTrender extends GearController {
 		});
 		cb.setMaxWidth(Double.MAX_VALUE);
 		cb.setStyle("-fx-font-size: 11px");
-		cb.setPrefWidth(350);
 		
 		CheckBox cbCollapse = new CheckBox("Collapse");
 		cbCollapse.setPrefWidth(200);
@@ -225,6 +239,24 @@ public class WordTrender extends GearController {
 			}
 		});
 		cbCollapse.setFont(Font.font(Font.getDefault().getName(), 11));
+		
+		Button btnAutoZoom = new Button("Auto Zoom");
+		btnAutoZoom.setOnMouseReleased(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent event) {
+				lineChart.getXAxis().setAutoRanging( true );
+				lineChart.getYAxis().setAutoRanging( true );
+				ObservableList<XYChart.Series<Number,Number>> data = lineChart.getData();
+				lineChart.setData( FXCollections.<XYChart.Series<Number, Number>>emptyObservableList() );
+				lineChart.setData( data );
+			}
+		});
+		Image magnifyImage = new Image(getClass().getResourceAsStream("/org/sustudio/concise/app/icon/06-magnify.png"));
+		ImageView magnifyImageView = new ImageView(magnifyImage);
+		magnifyImageView.setFitHeight(11);
+		magnifyImageView.setPreserveRatio(true);
+		btnAutoZoom.setGraphic(magnifyImageView);
+		btnAutoZoom.setPrefWidth(140);
+		btnAutoZoom.setFont(Font.font(Font.getDefault().getName(), 11));
 		
 		Button btnClear = new Button("Clear");
 		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -248,9 +280,40 @@ public class WordTrender extends GearController {
 		btnClear.setFont(Font.font(Font.getDefault().getName(), 11));
 		
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(cb, cbCollapse, btnClear);
+		hbox.getChildren().addAll(cb, cbCollapse, btnAutoZoom, btnClear);
 		
 		return hbox;
+	}
+	
+	// TODO this is a test function
+	private void addZoomSupportForChart() {
+		lineChart.getXAxis().setAutoRanging( true );
+		lineChart.getYAxis().setAutoRanging( true );
+		
+		//Panning works via either secondary (right) mouse or primary with ctrl held down
+		ChartPanManager panner = new ChartPanManager( lineChart );
+		panner.setMouseFilter( new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() == MouseButton.SECONDARY ||
+						 ( mouseEvent.getButton() == MouseButton.PRIMARY &&
+						   mouseEvent.isShortcutDown() ) ) {
+					//let it through
+				} else {
+					mouseEvent.consume();
+				}
+			}
+		} );
+		panner.start();
+		
+		JFXChartUtil.setupZooming(lineChart, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle( MouseEvent mouseEvent ) {
+				if ( mouseEvent.getButton() != MouseButton.PRIMARY ||
+				     mouseEvent.isShortcutDown() )
+					mouseEvent.consume();
+			}
+		} );
 	}
 	
 	public Control[] getZoomableControls() {
@@ -323,7 +386,7 @@ public class WordTrender extends GearController {
 	 * @param word
 	 */
 	private void removeSeries(final String word) {
-		final CASpinner spinner = new CASpinner(WordTrender.this);
+		final CASpinner spinner = new CASpinner(CopyOfWordTrender.this);
 		spinner.open();
 		Thread thread = new Thread() {
 			public void run() {
@@ -344,7 +407,7 @@ public class WordTrender extends GearController {
 				
 				getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						for (Series<String, Number> series : lineChart.getData()) {
+						for (Series<Number, Number> series : lineChart.getData()) {
 							if (series.getName().equals(word)) {
 								int index = lineChart.getData().indexOf(series);
 								lineChart.getData().remove(index);
@@ -361,7 +424,7 @@ public class WordTrender extends GearController {
 	}
 	
 	private void addSeriesData(String seriesName, Map<ConciseDocument, Integer> freqTable) {
-		Series<String, Number> series = new Series<>();
+		Series<Number, Number> series = new Series<>();
 		series.setName(seriesName);
 		
 		for (ConciseDocument cd : docs) {
@@ -369,10 +432,9 @@ public class WordTrender extends GearController {
 			if (freqTable.get(cd) != null) {
 				freq = freqTable.get(cd).intValue();
 			}
-			XYChart.Data<String, Number> data =
-					new XYChart.Data<String, Number>(
-							//docs.indexOf(cd),
-							cd.title,
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(
+							docs.indexOf(cd),
 							freq);
 			series.getData().add(data);
 			data.setNode(new HoveredNode(series.getName(), cd, docs.indexOf(cd)));
@@ -399,7 +461,7 @@ public class WordTrender extends GearController {
 	
 	private void addSeriesFor(String word) throws Exception {
 		// check if the word already exists
-		for (Series<String, Number> series : lineChart.getData()) {
+		for (Series<Number, Number> series : lineChart.getData()) {
 			if (series.getName().equals(word))
 				return;
 		}
@@ -409,7 +471,7 @@ public class WordTrender extends GearController {
 	}
 	
 	private void addSeriesData(String seriesName, Map<Integer, Integer> freqTable, ConciseDocument cd) {
-		Series<String, Number> series = new Series<>();
+		Series<Number, Number> series = new Series<>();
 		series.setName(seriesName);
 		
 		for (int i = 0; i < SEGMENTS; i++) {
@@ -417,8 +479,8 @@ public class WordTrender extends GearController {
 			if (freqTable.get(Integer.valueOf(i)) != null) {
 				freq = freqTable.get(Integer.valueOf(i)).intValue();
 			}
-			XYChart.Data<String, Number> data =
-					new XYChart.Data<String, Number>(String.valueOf(i+1), freq);
+			XYChart.Data<Number, Number> data =
+					new XYChart.Data<Number, Number>(i, freq);
 			series.getData().add(data);
 			data.setNode(new HoveredNode(series.getName(), cd, i));
 		}
@@ -446,7 +508,7 @@ public class WordTrender extends GearController {
 	
 	private void addSeriesFor(String word, ConciseDocument cd) {
 		// check if the word already exists
-		for (Series<String, Number> series : lineChart.getData()) {
+		for (Series<Number, Number> series : lineChart.getData()) {
 			if (series.getName().equals(word))
 				return;
 		}
@@ -518,14 +580,70 @@ public class WordTrender extends GearController {
 		HoveredNode(String word, final ConciseDocument cd, final int xIndex) {
 			setOnMouseEntered(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
-					lineChart.showFreqBox(HoveredNode.this);
+					
+					final VBox vbox = new VBox(5);
+					vbox.getStyleClass().addAll("chart-line-symbol", "chart-series-line");
+					
+					Text freqTitle = new Text(cd.title);
+					freqTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.BOLD, 11));
+					freqTitle.autosize();
+					vbox.getChildren().add(freqTitle);
+					
+					for (Series<Number, Number> series : lineChart.getData()) {						
+						// find legend Label
+						final Legend legend = (Legend) lineChart.lookup(".chart-legend");
+						Label legendLabel = (Label) legend.getChildrenUnmodifiable().get(lineChart.getData().indexOf(series));
+						WritableImage img = legendLabel.getGraphic().snapshot(new SnapshotParameters(), null);
+						
+						// set up Label
+						XYChart.Data<Number, Number> d = series.getData().get(xIndex);
+						Label wordCount = new Label(series.getName() + ": " + d.getYValue());
+						wordCount.setGraphic(new ImageView(img));
+						wordCount.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 14));
+						wordCount.autosize();
+						vbox.getChildren().add(wordCount);
+					}
+					// append document title to VBox
+					//Text docTitle = new Text(cd.title);
+					//docTitle.setFont(Font.font(Font.getDefault().getName(), FontWeight.NORMAL, 9));
+					//vbox.getChildren().add(docTitle);
+					vbox.autosize();
+					
+					//final ScrollPane sp = new ScrollPane();
+					//sp.setContent(vbox);
+					//sp.setPrefSize(250, 300);
+					//getChildren().setAll(sp);
+					getChildren().setAll(vbox);
+					
+					// set alignment
+					// TODO 位置不太對
+					vbox.setTranslateY(-10);
+					vbox.setTranslateX(-10);
+					if (getLayoutY() - vbox.getHeight() - 10 > 0) {
+						if (getLayoutX() - vbox.getWidth() - 10 < 0)	{
+							vbox.setTranslateX(10);
+							setAlignment(Pos.BOTTOM_LEFT);
+						}
+						else
+							setAlignment(Pos.BOTTOM_RIGHT);
+					}
+					else {
+						vbox.setTranslateY(10);
+						if (getLayoutX() - vbox.getWidth() - 10 < 0) {
+							vbox.setTranslateX(10);
+							setAlignment(Pos.TOP_LEFT);
+						}
+						else
+							setAlignment(Pos.TOP_RIGHT);
+					}
+					
+					toFront();
 					setCursor(Cursor.HAND);
 				}
 			});
 			setOnMouseExited(new EventHandler<MouseEvent>() {
 				@Override public void handle(MouseEvent event) {
-					//lineChart.hideFreqBox();
-					setCursor(null);
+					getChildren().clear();
 		        }
 			});
 			setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -535,7 +653,7 @@ public class WordTrender extends GearController {
 					// open DocumentViewer
 					DocumentViewer viewer = (DocumentViewer) Gear.DocumentViewer.open(workspace);
 					StringBuilder sb = new StringBuilder();
-					for (Series<String, Number> series: lineChart.getData()) {
+					for (Series<Number, Number> series: lineChart.getData()) {
 						if (sb.length() > 0) sb.append(" ");
 						sb.append(series.getName());
 					}

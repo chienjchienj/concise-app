@@ -16,7 +16,6 @@ import org.sustudio.concise.app.db.SQLiteDB;
 import org.sustudio.concise.app.db.CATable;
 import org.sustudio.concise.app.dialog.CAErrorMessageDialog;
 import org.sustudio.concise.app.gear.Gear;
-import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.corpus.importer.ConciseField;
 
 public class CAQueryUtils {
@@ -73,10 +72,9 @@ public class CAQueryUtils {
 	 */
 	public static boolean isValidQuery(CAQuery query) {
 		
-		QueryParser parser = new QueryParser(
-				Config.LUCENE_VERSION, 
+		QueryParser parser = new QueryParser( 
 				ConciseField.CONTENT.field(), 
-				new WhitespaceAnalyzer(Config.LUCENE_VERSION));
+				new WhitespaceAnalyzer());
 		parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
 		parser.setAllowLeadingWildcard(true);
 		

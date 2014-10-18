@@ -14,7 +14,6 @@ import org.sustudio.concise.app.dialog.Dialog;
 import org.sustudio.concise.app.gear.Gear;
 import org.sustudio.concise.app.preferences.CAPrefs;
 import org.sustudio.concise.app.query.CAQuery;
-import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.Workspace;
 import org.sustudio.concise.core.collocation.ConciseTokenAnalyzer;
 import org.sustudio.concise.core.concordance.Conc;
@@ -61,8 +60,7 @@ public class PlotterThread extends ConciseThread {
 																		  CAPrefs.SHOW_PART_OF_SPEECH) 
 				{
 					public Analyzer getAnalyzer() {
-						return new ConciseTokenAnalyzer(Config.LUCENE_VERSION, 
-														CAPrefs.SHOW_PART_OF_SPEECH);
+						return new ConciseTokenAnalyzer(CAPrefs.SHOW_PART_OF_SPEECH);
 					}
 				};
 				String content = highlighter.getHighlightText();

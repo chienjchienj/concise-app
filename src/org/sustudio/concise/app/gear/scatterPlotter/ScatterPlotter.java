@@ -9,12 +9,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swt.FXCanvas;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -39,6 +41,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.converter.NumberStringConverter;
@@ -118,6 +121,10 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 	 * @return
 	 */
 	private FXCanvas createChart(Composite parent) {
+		// solve problem: Not on FX application thread; currentThread = JavaFX Application Thread
+		// see http://stackoverflow.com/questions/21083945/how-to-avoid-not-on-fx-application-thread-currentthread-javafx-application-th
+		Platform.setImplicitExit(false);
+
 		fxCanvas = new FXCanvas(parent, SWT.NONE);
 		BorderPane border = new BorderPane();
 		HBox hbox = new HBox();
@@ -141,8 +148,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		cb.setMaxWidth(Double.MAX_VALUE);
 		
 		Button btnZoomFit = new Button("Zoom Fit");
-		btnZoomFit.setOnMouseReleased(new EventHandler<MouseEvent>() {
-			@Override public void handle(MouseEvent event) {
+		btnZoomFit.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
 				scatterChart.getXAxis().setAutoRanging( true );
 				scatterChart.getYAxis().setAutoRanging( true );
 				ObservableList<XYChart.Series<Number,Number>> data = scatterChart.getData();
@@ -155,8 +162,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		btnZoomFit.setFont(new Font(11));
 		
 		Button btnLabel = new Button("Label");
-		btnLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
-			@Override public void handle(MouseEvent event) {
+		btnLabel.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
 				scatterChart.setLabelVisible(!scatterChart.isLabelVisible());
 			}
 		});
@@ -165,8 +172,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		btnLabel.setFont(new Font(11));
 		
 		Button btnClear = new Button("Clear");
-		btnClear.setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override public void handle(MouseEvent event) {
+		btnClear.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
 				try {
 					SQLiteDB.dropTableIfExists(CATable.ScatterPlotter);
 				} catch (SQLException | IOException e) {
@@ -182,8 +189,8 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		btnClear.setFont(new Font(11));
 		
 		final Button btnTable = new Button("Hide Table");
-		btnTable.setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override public void handle(MouseEvent event) {
+		btnTable.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
 				SashForm sashForm = (SashForm) fxCanvas.getParent();
 				if (sashForm.getMaximizedControl() == null) {
 					sashForm.setMaximizedControl(fxCanvas);
@@ -198,7 +205,7 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 		btnTable.setGraphic(getImageView("/org/sustudio/concise/app/icon/179-notepad.png"));
 		btnTable.setPrefWidth(140);
 		btnTable.setFont(new Font(11));
-		btnTable.setTooltip(new Tooltip("show/hide table"));
+		//btnTable.setTooltip(new Tooltip("show/hide table"));
 		
 		hbox.setAlignment(Pos.CENTER);
 		hbox.getChildren().addAll(cb, btnZoomFit, btnLabel, btnClear, btnTable);
@@ -264,8 +271,11 @@ public class ScatterPlotter extends GearController implements IGearSortable {
 			}
 		});
 		
-		
-		fxCanvas.setScene(new Scene(border));
+		Scene scene = new Scene(border, Color.rgb(
+				getShell().getBackground().getRed(), 
+				getShell().getBackground().getGreen(), 
+				getShell().getBackground().getBlue()));
+		fxCanvas.setScene(scene);
 		return fxCanvas;
 	}
 	
