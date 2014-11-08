@@ -46,6 +46,7 @@ public class CAViewMenu extends CAMenuItem {
 		addGear(toolMenu, Gear.DocumentViewer);
 		addGear(toolMenu, Gear.LemmaEditor);
 		addGear(toolMenu, Gear.StopWorder);
+		addGear(toolMenu, Gear.DictionaryEditor);
 		
 		addSeparator();
 		

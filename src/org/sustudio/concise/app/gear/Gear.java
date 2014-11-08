@@ -14,6 +14,7 @@ import org.sustudio.concise.app.Workspace;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.collocationalNetworker.CollocationalNetworker;
 import org.sustudio.concise.app.gear.concordancePlotter.ConcordancePlotter;
+import org.sustudio.concise.app.gear.dictionaryEditor.DictionaryEditor;
 import org.sustudio.concise.app.gear.lemmaEditor.LemmaEditor;
 import org.sustudio.concise.app.gear.scatterPlotter.ScatterPlotter;
 import org.sustudio.concise.app.gear.wordClouder.WordClouder;
@@ -94,12 +95,17 @@ public enum Gear {
 	/** Gear for Lemma Editor */
 	LemmaEditor(
 			"Lemma Editor",
-			"/org/sustudio/concise/app/icon/123-id-card.png");
+			"/org/sustudio/concise/app/icon/123-id-card.png"),
+			
+	/** Gear for Dictionary Editor */
+	DictionaryEditor(
+			"Dictionary Editor",
+			"/org/sustudio/concise/app/icon/96-book.png");
 	
 	
 	private final String label;
 	private final Image image;
-	private final HashMap<Workspace, GearController> gearViewMap = new HashMap<Workspace, GearController>();
+	private final HashMap<Workspace, GearController> controllerMap = new HashMap<Workspace, GearController>();
 	
 	Gear(final String label, final String imageClasspath) {
 		this.label = label;
@@ -114,16 +120,16 @@ public enum Gear {
 		return image;
 	}
 	
-	public void setGearView(Workspace workspace, GearController gearView) {
-		if (gearView == null) {
-			gearViewMap.remove(workspace);
+	public void setGearController(Workspace workspace, GearController controller) {
+		if (controller == null) {
+			controllerMap.remove(workspace);
 		} else {
-			gearViewMap.put(workspace, gearView);
+			controllerMap.put(workspace, controller);
 		}
 	}
 	
 	public GearController getController(Workspace workspace) {
-		GearController controller = gearViewMap.get(workspace);
+		GearController controller = controllerMap.get(workspace);
 		if (controller == null) {
 			switch (this) {
 			case CollocationalNetworker:	controller = new CollocationalNetworker();	break;
@@ -134,6 +140,7 @@ public enum Gear {
 			case DocumentViewer:			controller = new DocumentViewer();			break;
 			case KeywordLister:				controller = new KeywordLister();			break;
 			case LemmaEditor:				controller = new LemmaEditor();				break;
+			case DictionaryEditor:			controller = new DictionaryEditor();		break;
 			case ReferenceCorpusManager:	controller = new ReferenceCorpusManager();	break;
 			//case SearchWorder:				controller = new SearchWorder();			break;
 			case StopWorder:				controller = new StopWorder();				break;
@@ -146,7 +153,7 @@ public enum Gear {
 			}
 			
 			if (controller != null) {
-				gearViewMap.put(workspace, controller);
+				controllerMap.put(workspace, controller);
 				CTabItem item = new CTabItem(controller.getBox().getBoxView(workspace), SWT.CLOSE);
 				item.setText(this.label());
 				item.setImage(this.image());
@@ -158,14 +165,14 @@ public enum Gear {
 	}
 	
 	public GearController open(Workspace workspace) {
-		GearController gearView = gearViewMap.get(workspace);
-		if (gearView == null) {
-			gearView = getController(workspace);
+		GearController controller = controllerMap.get(workspace);
+		if (controller == null) {
+			controller = getController(workspace);
 		}
 		
-		if (gearView != null) {
-			gearView.getBox().getBoxView(workspace).setSelection(this);
-			if (gearView.getBox().equals(CABox.ToolBox)) {
+		if (controller != null) {
+			controller.getBox().getBoxView(workspace).setSelection(this);
+			if (controller.getBox().equals(CABox.ToolBox)) {
 				// show toolbox
 				CTabFolder toolBox = CABox.ToolBox.getBoxView(workspace);
 				SashForm container = (SashForm) toolBox.getParent();
@@ -173,11 +180,11 @@ public enum Gear {
 			}
 		}
 		
-		return gearView;
+		return controller;
 	}
 	
 	public boolean isVisible(Workspace workspace) {
-		GearController gearView = gearViewMap.get(workspace);
+		GearController gearView = controllerMap.get(workspace);
 		if (gearView == null) {
 			return false;
 		}

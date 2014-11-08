@@ -95,6 +95,8 @@ public class WordLister
 		tree.addListener(SWT.SetData, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
+				if (workspace.DATA.wordlist == null) return;
+				
 				final TreeItem item = (TreeItem) event.item;
 				final TreeItem parentItem = item.getParentItem();
 				int index = event.index;

@@ -30,7 +30,7 @@ public enum CABox {
 	}
 	
 	public GearController getSelectedGearView(Workspace workspace) {
-		return boxViewMap.get(workspace).getSelectedGearView();
+		return boxViewMap.get(workspace).getSelectedGearController();
 	}
 	
 	public Gear getSelectedGear(Workspace workspace) {

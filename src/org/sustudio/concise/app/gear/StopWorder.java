@@ -98,7 +98,7 @@ public class StopWorder extends GearController {
 		Group grpWords = new Group(comp, SWT.NONE);
 		grpWords.setLayout(new GridLayout(1, false));
 		grpWords.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1));
-		grpWords.setText("Search Words");
+		grpWords.setText("Stop Words");
 		
 		wordsList = new List(grpWords, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
 		wordsList.addKeyListener(new KeyAdapter() {

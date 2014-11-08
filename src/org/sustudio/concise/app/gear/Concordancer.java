@@ -107,6 +107,8 @@ public class Concordancer
 		
 		table.addListener(SWT.SetData, new Listener() {
 			public void handleEvent(Event event) {
+				if (Concise.getData().concLineList == null) return;
+				
 				TableItem item = (TableItem) event.item;
 				int index = event.index;
 				String[] texts = getItemTexts(index);

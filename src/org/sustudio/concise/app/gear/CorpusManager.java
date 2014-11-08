@@ -164,7 +164,7 @@ public class CorpusManager
 						docs.clear();
 					}
 					message.setLength(0);
-				}
+				}	// end of DEL
 			}
 		});
 		

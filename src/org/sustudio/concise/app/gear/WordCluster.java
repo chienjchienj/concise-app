@@ -1,6 +1,14 @@
 package org.sustudio.concise.app.gear;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceAdapter;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.MouseAdapter;
@@ -67,6 +75,8 @@ public class WordCluster
 		table.addListener(SWT.SetData, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
+				if (workspace.DATA.clusterList == null) return;
+				
 				final TableItem item = (TableItem) event.item;
 				final int index = event.index;
 				String[] texts = getItemTexts(index);
@@ -93,6 +103,37 @@ public class WordCluster
 				table.getColumn(table.getColumnCount()-1).setWidth(width);
 			}
 		});
+		
+		
+		// Cluster[] transfer dragSource
+	    Transfer[] types = new Transfer[] { WordClusterTransfer.getInstance() };
+	    final DragSource dragSource = new DragSource(table, DND.DROP_COPY | DND.DROP_MOVE);
+	    dragSource.setTransfer(types);
+	    
+	    dragSource.addDragListener(new DragSourceAdapter() {
+	    	public void dragStart(DragSourceEvent event) {
+	    		if (table.getSelectionCount() > 0) {
+	    			event.doit = true;
+	    		} else {
+	    			event.doit = false;
+	    		}
+	    	};
+	    	
+	    	public void dragSetData(DragSourceEvent event) {
+	    		if (WordClusterTransfer.getInstance().isSupportedType(event.dataType)) {
+	    			List<Cluster> list = new ArrayList<Cluster>();
+		    		for (int index : table.getSelectionIndices()) {
+		    			Cluster cluster = (Cluster) workspace.DATA.clusterList.get(index);
+		    			list.add(cluster);
+		    		}
+		    		event.data = list.toArray(new Cluster[0]);
+	    		}
+	    	}
+	    	
+	    	public void dragFinished(DragSourceEvent event) {
+	    		// do nothing
+	    	}
+	    });
 		
 		return table;
 	}

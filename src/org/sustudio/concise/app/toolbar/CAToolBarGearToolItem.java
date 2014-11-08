@@ -73,6 +73,7 @@ public class CAToolBarGearToolItem extends ToolItem {
 			addItem(Gear.LemmaEditor);
 			//addItem(Gear.SearchWorder);
 			addItem(Gear.StopWorder);
+			addItem(Gear.DictionaryEditor);
 			
 			Rectangle rect = item.getBounds();
 			Point pt = item.getParent().toDisplay(rect.x, rect.y);

@@ -157,7 +157,7 @@ public class DocumentViewer
 			
 		});
 		
-		txtSearch = new CAAutoCompleteText(composite, SWT.SEARCH | SWT.ICON_SEARCH | SWT.BORDER | SWT.CANCEL);
+		txtSearch = new CAAutoCompleteText(composite, SWT.BORDER | SWT.SINGLE);
 		txtSearch.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 		txtSearch.setFont(SWTResourceManager.getFont("Lucida Grande", 11, SWT.NORMAL));
 		txtSearch.addSelectionListener(new SelectionAdapter() {

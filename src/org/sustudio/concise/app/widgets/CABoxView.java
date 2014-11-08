@@ -1,11 +1,14 @@
 package org.sustudio.concise.app.widgets;
 
+import java.util.ArrayList;
+
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Control;
 import org.sustudio.concise.app.Concise;
 import org.sustudio.concise.app.enums.CABox;
 import org.sustudio.concise.app.gear.Gear;
@@ -58,14 +61,23 @@ public abstract class CABoxView extends CTabFolder {
 		}
 	}
 	
-	public GearController getSelectedGearView() {
+	public GearController[] getGearControllers() {
+		ArrayList<GearController> list = new ArrayList<GearController>();
+		for (Control control : getChildren()) {
+			if (control instanceof GearController) 
+				list.add((GearController) control);
+		}
+		return list.toArray(new GearController[0]);
+	}
+	
+	public GearController getSelectedGearController() {
 		if (getSelection() == null) return null;
 		return (GearController) getSelection().getControl();
 	}
 	
 	public Gear getSelectedGear() {
-		if (getSelectedGearView() == null) return null;
-		return getSelectedGearView().getGear();
+		if (getSelectedGearController() == null) return null;
+		return getSelectedGearController().getGear();
 	}
 	
 }

@@ -28,8 +28,6 @@ public class CAConcThread extends ConciseThread {
 		
 		try {
 			dialog.setStatus("checking...");
-			// Drop old table
-			SQLiteDB.dropTableIfExists(CATable.Concordancer);
 			
 			// reset dbColumns for position vectors
 			CATable.Concordancer.setDBColumns(null);
@@ -49,6 +47,8 @@ public class CAConcThread extends ConciseThread {
 			}
 			CATable.Concordancer.setDBColumns(dbCols);
 			
+			// Drop old table
+			SQLiteDB.dropTableIfExists(CATable.Concordancer);
 			// create new table and prepare to write data
 			SQLiteDB.createTableIfNotExists(CATable.Concordancer);
 			PreparedStatement ps = SQLiteDB.prepareStatement(CATable.Concordancer);

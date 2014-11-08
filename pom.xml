@@ -50,9 +50,9 @@
   	<dependency>
       	<groupId>opal</groupId>  
        	<artifactId>opal</artifactId>  
-       	<version>0.9.9e</version> 
+       	<version>1.0.1</version> 
       	<scope>system</scope>
-		<systemPath>${project.basedir}/lib/opal-0.9.9e.jar</systemPath>
+		<systemPath>${project.basedir}/lib/opal-1.0.1.jar</systemPath>
 	</dependency>
   	<dependency>
   		<groupId>dom4j</groupId>

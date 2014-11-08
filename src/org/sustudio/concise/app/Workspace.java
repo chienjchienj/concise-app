@@ -70,7 +70,9 @@ public class Workspace extends org.sustudio.concise.core.Workspace {
 				sb.append(new String(b, 0, readbytes));
 			}
 			p.destroy();
-			if (sb.toString().substring(sb.lastIndexOf(" ")).trim().equals(Concise.class.getName())) {
+			if (sb.length() > 0 &&
+				sb.substring(sb.lastIndexOf(" ")).trim().equals(Concise.class.getName())) 
+			{
 				throw new WorkspaceLockedException("PID " + FileUtils.readFileToString(lock) + " is using this workspace.");
 			}
 			

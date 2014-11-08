@@ -96,6 +96,8 @@ public class Collocator
 		// add SetData listener
 		table.addListener(SWT.SetData, new Listener() {
 			public void handleEvent(Event event) {
+				if (Concise.getData().collocateList == null) return;
+				
 				TableItem item = (TableItem) event.item;
 				int index = event.index;
 				

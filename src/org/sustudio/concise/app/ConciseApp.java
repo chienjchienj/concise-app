@@ -91,6 +91,11 @@ public class ConciseApp extends Shell {
 							openedGears.add(((GearController) control).getGear());
 						}
 					}
+					for (Control control : toolBoxView.getChildren()) {
+						if (control instanceof GearController) {
+							openedGears.add(((GearController) control).getGear());
+						}
+					}
 					CAPrefs.OPENED_GEARS = openedGears.toArray(new Gear[0]);
 					CAPrefs.LAST_ACTIVE_GEAR = CABox.GearBox.getSelectedGear(workspace);
 					
@@ -182,6 +187,12 @@ public class ConciseApp extends Shell {
 				}
 				else {
 					CAPrefs.LAST_ACTIVE_GEAR.open(workspace);
+				}
+				
+				// show toolbox if needed
+				if (toolBoxView.getGearControllers().length > 0) {
+					SashForm container = (SashForm) toolBoxView.getParent();
+					container.setMaximizedControl(null);
 				}
 			}
 		});

@@ -65,7 +65,8 @@ public class CAToolBar {
 		tltmImport.setToolTipText("Import Corpus");
 		tltmImport.addSelectionListener(CorpusManipulation.ImportDocuments.selectionAdapter());
 		
-		txtSearch = new CAAutoCompleteText(toolBar, SWT.BORDER | SWT.SEARCH | SWT.CANCEL);
+		txtSearch = new CAAutoCompleteText(toolBar, SWT.BORDER | SWT.SINGLE);
+		txtSearch.setFont(SWTResourceManager.getFont("Lucida Grande", 23, SWT.NORMAL));
 		PromptSupport.setPrompt("search", txtSearch);
 		txtSearch.addSelectionListener(new CAToolBarSearchListener());
 		CopyPasteHelper.listenTo(txtSearch);

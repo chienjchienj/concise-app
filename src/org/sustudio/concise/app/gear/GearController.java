@@ -47,7 +47,7 @@ public abstract class GearController extends Composite {
 		/**
 		 * Register {@link GearControl} to {@link GearsEnum}.
 		 */
-		this.gear.setGearView(workspace, this);
+		this.gear.setGearController(workspace, this);
 		this.box = box;
 		
 		// something need to be initiated before loading GUI widgets
@@ -79,7 +79,7 @@ public abstract class GearController extends Composite {
 			public void widgetDisposed(DisposeEvent event) {
 				unloadData();
 				ZoomHelper.removeControls(getZoomableControls());
-				GearController.this.gear.setGearView(workspace, null);
+				GearController.this.gear.setGearController(workspace, null);
 			}
 		});
 		
@@ -176,7 +176,7 @@ public abstract class GearController extends Composite {
 	
 	public void dispose() {
 		ZoomHelper.removeControls(getZoomableControls());
-		gear.setGearView(workspace, null);
+		gear.setGearController(workspace, null);
 		unloadData();
 		super.dispose();
 	}
