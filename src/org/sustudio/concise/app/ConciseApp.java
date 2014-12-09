@@ -193,6 +193,9 @@ public class ConciseApp extends Shell {
 				if (toolBoxView.getGearControllers().length > 0) {
 					SashForm container = (SashForm) toolBoxView.getParent();
 					container.setMaximizedControl(null);
+					if (toolBoxView.getSelectedGear() == null) {
+						toolBoxView.setSelection(0);
+					}
 				}
 			}
 		});

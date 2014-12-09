@@ -270,6 +270,10 @@ public class CAToolBar {
 				leftSpan.setEnabled(CAPrefs.COLLOCATION_MODE.isSurface());
 				rightSpan.setEnabled(CAPrefs.COLLOCATION_MODE.isSurface());
 				break;
+			case WordCluster:
+				leftSpan.setEnabled(true);
+				rightSpan.setEnabled(!query.ngram);
+				break;
 			default:
 				leftSpan.setEnabled(txtSearch.getEnabled());
 				rightSpan.setEnabled(txtSearch.getEnabled());

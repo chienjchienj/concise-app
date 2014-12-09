@@ -37,9 +37,6 @@ public class Concise {
 	 */
 	public static void main(String[] args) {
 		
-		// the current working directory
-		//System.out.println(System.getProperty("user.dir"));
-		
 		Concise concise = new Concise();
 		concise.open();
 		

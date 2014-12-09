@@ -84,7 +84,6 @@ public class DictionaryTable extends Composite {
 		table.addListener(SWT.Dispose, listener);
 		table.addListener(SWT.MouseExit, listener);
 		table.addListener(SWT.MouseMove, listener);
-		table.addListener(SWT.PaintItem, listener);
 		
 		table.addListener(SWT.MeasureItem, new Listener() {
 			public void handleEvent(Event event) {
@@ -92,8 +91,6 @@ public class DictionaryTable extends Composite {
 				event.width = table.getBounds().width;
 			}
 		});
-		
-		
 		
 		final ToolBar toolBar = new ToolBar(group, SWT.FLAT | SWT.RIGHT);
 		toolBar.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -267,12 +264,7 @@ public class DictionaryTable extends Composite {
 		final int IMAGE_MARGIN = 2;
 		
 		private Color bg = new Color(Display.getDefault(), 255, 225, 200);
-		private Image image = new Image(Display.getDefault(), DictionaryTable.class.getResourceAsStream("/org/sustudio/concise/app/icon/icon_edit.png"));
 		private TableItem hoveredItem;
-		
-		public void setImage(Image image) {
-			this.image = image;
-		}
 		
 		public void setBackground(Color color) {
 			this.bg = color;
@@ -309,18 +301,6 @@ public class DictionaryTable extends Composite {
 					hoveredItem.setBackground(bg);
 				}
 				//System.out.println(point);
-				break;
-			
-			case SWT.PaintItem:
-				if (image != null 
-					&& event.item != null 
-					&& hoveredItem != null 
-					&& hoveredItem.equals(event.item)) 
-				{
-					int x = event.x + event.width + IMAGE_MARGIN;
-					int y = event.y + (table.getItemHeight() - image.getBounds().height) / 2;
-					event.gc.drawImage(image, x, y);
-				}
 				break;
 			}
 		}
