@@ -70,7 +70,6 @@ import org.sustudio.concise.app.query.CAQuery;
 import org.sustudio.concise.app.query.CAQueryUtils;
 import org.sustudio.concise.app.thread.ConciseThread;
 import org.sustudio.concise.app.widgets.CASpinner;
-import org.sustudio.concise.core.Config;
 import org.sustudio.concise.core.Workspace.INDEX;
 import org.sustudio.concise.core.collocation.ConciseTokenAnalyzer;
 import org.sustudio.concise.core.concordance.Conc;

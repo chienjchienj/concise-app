@@ -70,7 +70,6 @@ import org.sustudio.concise.core.wordlister.WordUtils;
 
 import com.sun.javafx.charts.Legend;
 
-@SuppressWarnings("restriction")
 public class WordTrender extends GearController {
 
 	protected static final ConciseDocument ALL_DOCUMENTS = new ConciseDocument();

@@ -27,7 +27,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
-@SuppressWarnings("restriction")
 public class ConciseLineChart extends LineChart<String, Number> {
 	
 	private final CCategoryAxis xAxis;
